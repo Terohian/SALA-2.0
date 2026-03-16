@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Super Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="sala.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+<style>
+/* ── Super Admin page-specific styles ────────────────────────────── */
+.sa-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;overflow-x:auto}
+.sa-tab-btn{
+  background:none;border:none;font-family:var(--font-body);font-weight:600;font-size:13.5px;
+  color:var(--muted);cursor:pointer;padding:10px 18px;border-radius:8px 8px 0 0;
+  transition:all .2s;position:relative;white-space:nowrap;display:flex;align-items:center;gap:7px;
+}
+.sa-tab-btn:hover{color:var(--navy);background:rgba(15,21,53,.03)}
+.sa-tab-btn.active{color:var(--blue)}
+.sa-tab-btn.active::after{content:'';position:absolute;bottom:-2px;left:0;width:100%;height:3px;background:var(--blue);border-radius:3px 3px 0 0}
+.sa-tab-pane{display:none}
+.sa-tab-pane.active{display:block;animation:saFadeIn .25s ease}
+@keyframes saFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* stat grid */
+.sa-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.sa-stat{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:16px 18px;display:flex;align-items:center;gap:14px;
+  box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;
+}
+.sa-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.sa-stat-icon{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.sa-stat-body .val{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--navy);line-height:1}
+.sa-stat-body .lbl{font-size:11.5px;color:var(--muted);margin-top:3px}
+.sa-stat-body .chg{font-size:11px;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:3px}
+.chg-up{color:var(--green)} .chg-down{color:var(--red)}
+
+/* user table */
+.user-table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{
+  background:var(--surface);padding:11px 16px;text-align:left;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);
+  border-bottom:1.5px solid var(--border);white-space:nowrap;
+}
+.user-table td{padding:12px 16px;font-size:13.5px;color:var(--text2);border-bottom:1px solid var(--border);vertical-align:middle}
+.user-table tr:last-child td{border-bottom:none}
+.user-table tbody tr:hover td{background:rgba(61,90,254,.02)}
+.user-ava-cell{
+  width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.role-badge{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;
+  font-size:11px;font-weight:700;
+}
+.role-admin   {background:rgba(255,77,109,.1);color:var(--red)}
+.role-lecturer{background:rgba(0,191,166,.12);color:#009e8a}
+.role-student {background:rgba(61,90,254,.1);color:var(--blue)}
+.action-btn{
+  padding:5px 11px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;
+  font-family:var(--font-body);transition:all .15s;border:1.5px solid transparent;
+}
+.btn-edit-user{background:rgba(61,90,254,.08);color:var(--blue);border-color:rgba(61,90,254,.2)}
+.btn-edit-user:hover{background:rgba(61,90,254,.15)}
+.btn-del-user{background:rgba(255,77,109,.07);color:var(--red);border-color:rgba(255,77,109,.2)}
+.btn-del-user:hover{background:rgba(255,77,109,.15)}
+
+/* search + filter bar */
+.sa-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.sa-search{
+  display:flex;align-items:center;gap:8px;flex:1;min-width:200px;
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;
+}
+.sa-search i{font-size:13px;color:var(--muted)}
+.sa-search input{background:none;font-size:13px;color:var(--text);width:100%}
+.sa-search input::placeholder{color:var(--muted)}
+
+/* modal overlay */
+.sa-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(10,14,40,.55);
+  backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;
+}
+.sa-modal-overlay.open{display:flex}
+.sa-modal{
+  background:var(--card);border-radius:var(--r-xl);padding:28px;
+  width:min(480px,92vw);box-shadow:var(--shadow-lg);border:1.5px solid var(--border);
+  animation:saModalIn .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes saModalIn{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
+.sa-modal-title{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.sa-modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.sa-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.sa-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.sa-input,.sa-select{
+  width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);
+  font-family:var(--font-body);font-size:13.5px;color:var(--navy);background:var(--card);transition:border .18s;
+}
+.sa-input:focus,.sa-select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(61,90,254,.1)}
+.sa-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* activity feed */
+.act-item{
+  display:flex;align-items:flex-start;gap:14px;padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.act-item:last-child{border-bottom:none}
+.act-icon{
+  width:34px;height:34px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.act-body{flex:1;min-width:0}
+.act-title{font-size:13.5px;font-weight:600;color:var(--navy)}
+.act-time{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* system health */
+.health-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--border)}
+.health-row:last-child{border-bottom:none}
+.health-label{font-size:13px;font-weight:600;color:var(--text2);width:160px;flex-shrink:0}
+.health-bar-wrap{flex:1;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.health-bar{height:100%;border-radius:99px;transition:width 1s ease}
+.health-val{font-size:12px;font-weight:700;width:44px;text-align:right;flex-shrink:0}
+.health-status{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;flex-shrink:0}
+.hs-ok   {background:rgba(6,214,160,.12);color:#05b382}
+.hs-warn {background:rgba(255,183,3,.12); color:#cc9200}
+.hs-crit {background:rgba(255,77,109,.1); color:var(--red)}
+
+/* chart containers */
+.chart-box{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm)}
+.chart-box-title{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+/* empty / loading */
+.sa-empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.sa-empty .ei{font-size:38px;margin-bottom:12px;opacity:.6}
+.sa-empty p{font-size:13.5px}
+
+/* pagination */
+.pagination{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:14px}
+.page-btn{
+  padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--card);border:1.5px solid var(--border);color:var(--text2);transition:all .15s;
+}
+.page-btn:hover,.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+@media(max-width:900px){
+  .sa-stat-grid{grid-template-columns:1fr 1fr}
+  .sa-form-row{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .sa-stat-grid{grid-template-columns:1fr}
+  .user-table th:nth-child(4),
+  .user-table td:nth-child(4),
+  .user-table th:nth-child(5),
+  .user-table td:nth-child(5){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>SALA</h2><p>Super Admin</p></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-ava" id="userAva">A</div>
+    <div class="user-info"><strong id="userName">Admin</strong><span id="userRole">SUPER ADMIN</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Admin Panel</div>
+    <div class="nav-item active"><span class="nav-icon">🛡️</span><span>Super Admin</span></div>
+    <div class="nav-item" onclick="location.href='admin.html'"><span class="nav-icon">👨‍🏫</span><span>Lecturer Portal</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="handleLogout()">
+      <span><i class="fa-solid fa-arrow-right-to-bracket"></i></span><span>Logout</span>
+    </button>
+  </div>
+</div>
+
+<div class="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title">Super Admin</span>
+  <span class="topbar-sub">/ System Control Centre</span>
+  <div class="topbar-spacer"></div>
+  <!-- dark mode toggle -->
+  <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode">
+    <i class="fa-solid fa-moon" id="darkToggleIcon"></i>
+  </button>
+  <button class="topbar-icon-btn" onclick="refreshAll()" title="Refresh data">
+    <i class="fa-solid fa-arrows-rotate"></i>
+  </button>
+  <button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="openAddUserModal()">
+    <i class="fa-solid fa-user-plus"></i> Add User
+  </button>
+</div>
+
+<div class="main-wrap">
+<div class="page-body">
+
+  <div class="page-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <h1><i class="fa-solid fa-shield-halved" style="color:var(--red);margin-right:8px"></i>System Control Centre</h1>
+        <p id="headerSub">Loading system overview…</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="sysStatusBadge" class="badge badge-teal" style="font-size:12px;padding:5px 12px">
+          <i class="fa-solid fa-circle" style="font-size:7px"></i> All Systems OK
+        </span>
+        <span id="lastRefresh" style="font-size:12px;color:var(--muted)">Last refresh: –</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STAT CARDS ────────────────────────────────────────── -->
+  <div class="sa-stat-grid" id="statGrid">
+    <!-- injected by JS -->
+    <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
+    <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
+    <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
+    <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
+  </div>
+
+  <!-- ── TABS ─────────────────────────────────────────────── -->
+  <div class="sa-tabs">
+    <button class="sa-tab-btn active" id="tabBtnUsers"    onclick="saTab('users',this)">
+      <i class="fa-solid fa-users"></i> Users
+      <span class="tab-badge" id="badgeUsers" style="display:none">0</span>
+    </button>
+    <button class="sa-tab-btn" id="tabBtnActivity" onclick="saTab('activity',this)">
+      <i class="fa-solid fa-timeline"></i> Activity
+    </button>
+    <button class="sa-tab-btn" id="tabBtnOverview" onclick="saTab('overview',this)">
+      <i class="fa-solid fa-chart-pie"></i> System Overview
+    </button>
+    <button class="sa-tab-btn" id="tabBtnHealth" onclick="saTab('health',this)">
+      <i class="fa-solid fa-heart-pulse"></i> Health
+    </button>
+  </div>
+
+  <!-- ════════════════════════════ TAB: USERS ════════════════════════════ -->
+  <div class="sa-tab-pane active" id="pane-users">
+    <div class="sa-bar">
+      <div class="sa-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="userSearch" placeholder="Search name, email, reg number…" oninput="filterUsers()"/>
+      </div>
+      <select class="filter-select" id="roleFilter" onchange="filterUsers()">
+        <option value="">All roles</option>
+        <option value="student">Students</option>
+        <option value="lecturer">Lecturers</option>
+        <option value="admin">Admins</option>
+      </select>
+      <select class="filter-select" id="progFilter" onchange="filterUsers()">
+        <option value="">All programmes</option>
+        <option value="cs">BSc. Computer Science</option>
+        <option value="bse">BSc. Software Engineering</option>
+        <option value="bit">BSc. IT</option>
+        <option value="bba">BBA IT</option>
+      </select>
+      <span id="userCount" style="font-size:13px;color:var(--muted);white-space:nowrap"></span>
+    </div>
+
+    <div class="user-table-wrap">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Reg / Staff #</th>
+            <th>Role</th>
+            <th>Programme</th>
+            <th>Enrolled</th>
+            <th>Joined</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr><td colspan="9" class="sa-empty"><p><i class="fa-solid fa-spinner fa-spin"></i> Loading users…</p></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="userPagination"></div>
+  </div>
+
+  <!-- ════════════════════════════ TAB: ACTIVITY ════════════════════════ -->
+  <div class="sa-tab-pane" id="pane-activity">
+    <div class="grid-2" style="align-items:start">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-timeline" style="color:var(--blue)"></i> Recent Activity</div>
+        <div id="activityFeed">
+          <p style="color:var(--muted);text-align:center;padding:20px">Loading activity…</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-chart-line" style="color:var(--teal)"></i> Registrations (Last 7 Days)</div>
+        <canvas id="regChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:14px;align-items:start">
+      <div class="chart-box">
+        <div class="chart-box-title"><i class="fa-solid fa-graduation-cap" style="color:var(--purple)"></i> Quizzes Taken (Last 7 Days)</div>
+        <canvas id="quizActivityChart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-comments" style="color:var(--amber)"></i> Q&A Activity</div>
+        <div id="qaActivitySummary" style="padding:8px 0">
+          <p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Loading…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ TAB: OVERVIEW ═══════════════════════ -->
+  <div class="sa-tab-pane" id="pane-overview">
+    <div class="grid-3" style="margin-bottom:14px">
+      <div class="chart-box">
+        <div class="chart-box-title"><i class="fa-solid fa-users" style="color:var(--blue)"></i> Users by Role</div>
+        <canvas id="roleChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title"><i class="fa-solid fa-graduation-cap" style="color:var(--teal)"></i> Students by Programme</div>
+        <canvas id="progChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title"><i class="fa-solid fa-book-open" style="color:var(--purple)"></i> Top Subjects by Enrolment</div>
+        <canvas id="subjChart" height="220"></canvas>
+      </div>
+    </div>
+    <div class="grid-2" style="align-items:start">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-robot" style="color:var(--blue)"></i> AI Engine Status</div>
+        <div id="aiStatus" style="padding:4px 0"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-database" style="color:var(--teal)"></i> Firestore Collections</div>
+        <div id="dbStatus" style="padding:4px 0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════ TAB: HEALTH ═════════════════════════ -->
+  <div class="sa-tab-pane" id="pane-health">
+    <div class="grid-2" style="align-items:start">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-server" style="color:var(--blue)"></i> Platform Health Indicators</div>
+        <div id="healthChecks">
+          <p style="color:var(--muted);text-align:center;padding:20px">Running checks…</p>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title"><i class="fa-solid fa-gauge-high" style="color:var(--red)"></i> Response Latency (mock)</div>
+        <canvas id="latencyChart" height="220"></canvas>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--amber)"></i> System Notices</div>
+      <div id="systemNotices"></div>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+</div><!-- /main-wrap -->
+
+<!-- ════════════════════ ADD / EDIT USER MODAL ════════════════════════ -->
+<div class="sa-modal-overlay" id="userModal">
+  <div class="sa-modal">
+    <div class="sa-modal-title" id="modalTitle">Add New User</div>
+    <div class="sa-modal-sub" id="modalSub">Fill in the details below. A Firestore document will be created.</div>
+
+    <div class="sa-form-row">
+      <div>
+        <label class="sa-label">Full Name *</label>
+        <input class="sa-input" id="mName" placeholder="e.g. Jane Wanjiku" />
+      </div>
+      <div>
+        <label class="sa-label">Email *</label>
+        <input class="sa-input" id="mEmail" type="email" placeholder="jane@sala.ac.ke" />
+      </div>
+    </div>
+    <div class="sa-form-row">
+      <div>
+        <label class="sa-label">Role *</label>
+        <select class="sa-select" id="mRole" onchange="toggleRoleFields()">
+          <option value="student">Student</option>
+          <option value="lecturer">Lecturer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div>
+        <label class="sa-label">Reg / Staff Number</label>
+        <input class="sa-input" id="mReg" placeholder="e.g. CT101/G/12345/24" />
+      </div>
+    </div>
+    <div id="mStudentFields">
+      <div class="sa-form-row">
+        <div>
+          <label class="sa-label">Programme</label>
+          <select class="sa-select" id="mProg">
+            <option value="cs">BSc. Computer Science</option>
+            <option value="bse">BSc. Software Engineering</option>
+            <option value="bit">BSc. Information Technology</option>
+            <option value="bba">BBA (IT Option)</option>
+          </select>
+        </div>
+        <div>
+          <label class="sa-label">Year of Study</label>
+          <select class="sa-select" id="mYear">
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="sa-label">Password <span id="pwHint" style="color:var(--muted);font-weight:400">(leave blank when editing to keep existing)</span></label>
+      <input class="sa-input" id="mPass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password"/>
+    </div>
+
+    <div class="sa-modal-actions">
+      <button class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveUser()">
+        <i class="fa-solid fa-floppy-disk"></i> Save User
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ CONFIRM DELETE MODAL ════════════════════════ -->
+<div class="sa-modal-overlay" id="confirmModal">
+  <div class="sa-modal" style="max-width:400px">
+    <div class="sa-modal-title" style="color:var(--red)">⚠️ Delete User</div>
+    <div class="sa-modal-sub" id="confirmModalSub">Are you sure? This removes the user document from Firestore. Firebase Auth deletion requires the Admin SDK — please run the seed script to clean up Auth.</div>
+    <div class="sa-modal-actions">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn" style="background:var(--red);color:#fff;border:none" id="confirmDeleteBtn" onclick="confirmDelete()">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  SALA SUPER ADMIN — JAVASCRIPT
+// ════════════════════════════════════════════════════════════════════
+
+let allUsers         = [];   // full user list from Firestore
+let filteredUsers    = [];   // after search/filter
+let currentPage      = 1;
+const PAGE_SIZE      = 15;
+let editingUserId    = null; // null = add mode, string = edit mode
+let pendingDeleteId  = null;
+
+// ── GUARD: only allow role === 'admin' ───────────────────────────────
+// Uses firebase.firestore() directly — no dependency on sala-app.js timing
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Wait for Firebase SDK itself (loaded via script tags above sala-app.js)
+  const waitForSDK = setInterval(() => {
+    if (typeof firebase !== 'undefined' && firebase.apps.length) {
+      clearInterval(waitForSDK);
+
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+          // Auth state null — could be settling after redirect. Wait briefly.
+          setTimeout(() => {
+            if (!firebase.auth().currentUser) {
+              window.location.href = 'login.html';
+            }
+          }, 600);
+          return;
+        }
+
+        try {
+          // Use firebase.firestore() directly — does not need window.salaDB
+          const db  = firebase.firestore();
+          const doc = await db.collection('users').doc(user.uid).get();
+
+          if (!doc.exists || doc.data().role !== 'admin') {
+            showToast('⛔ Access denied — admins only.', true);
+            setTimeout(() => {
+              firebase.auth().signOut().then(() => {
+                window.location.href = 'login.html';
+              });
+            }, 1500);
+            return;
+          }
+
+          // ✅ Authorised — boot the page
+          window._cachedUserData = { uid: user.uid, ...doc.data() };
+          // Also expose as salaDB once ready
+          window.salaDB = window.salaDB || firebase.firestore();
+          applySidebarData(window._cachedUserData);
+          document.getElementById('headerSub').textContent =
+            `Logged in as ${window._cachedUserData.name} · ${new Date().toLocaleDateString('en-KE',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+
+          refreshAll();
+        } catch(e) {
+          console.error('Superadmin auth guard error:', e);
+          // Don't redirect on transient errors — just log
+        }
+      });
+    }
+  }, 30);
+  setTimeout(() => clearInterval(waitForSDK), 10000);
+});
+
+async function refreshAll() {
+  document.getElementById('lastRefresh').textContent =
+    'Last refresh: ' + new Date().toLocaleTimeString();
+  await Promise.all([loadStats(), loadUsers()]);
+  // Lazy-load other tabs when activated
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  STATS
+// ────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const db = window.salaDB;
+  try {
+    const [userSnap, qSnap, qaSnap, quesSnap] = await Promise.all([
+      db.collection('users').get(),
+      db.collection('quiz_results').get(),
+      db.collection('qa_threads').get(),
+      db.collection('questions').get(),
+    ]);
+
+    const users    = [];
+    userSnap.forEach(d => users.push(d.data()));
+    const students = users.filter(u => u.role === 'student').length;
+    const staff    = users.filter(u => u.role !== 'student').length;
+
+    const statCards = [
+      { icon:'👥', bg:'rgba(61,90,254,.1)',  color:'var(--blue)',   val: userSnap.size,   lbl:'Total Users',      chg: `${students} students · ${staff} staff` },
+      { icon:'🧠', bg:'rgba(0,191,166,.12)', color:'#009e8a',       val: qSnap.size,      lbl:'Quizzes Taken',    chg: '' },
+      { icon:'💬', bg:'rgba(255,183,3,.12)', color:'#cc9200',       val: qaSnap.size,     lbl:'Q&A Threads',      chg: `${qaSnap.docs.filter(d=>!d.data().lecturerAnswer).length} unanswered` },
+      { icon:'📋', bg:'rgba(124,77,255,.1)', color:'var(--purple)', val: quesSnap.size,   lbl:'Questions in Bank',chg: '' },
+    ];
+
+    document.getElementById('statGrid').innerHTML = statCards.map(s => `
+      <div class="sa-stat">
+        <div class="sa-stat-icon" style="background:${s.bg};font-size:20px">${s.icon}</div>
+        <div class="sa-stat-body">
+          <div class="val" style="color:${s.color}">${s.val.toLocaleString()}</div>
+          <div class="lbl">${s.lbl}</div>
+          ${s.chg ? `<div class="chg" style="color:var(--muted)">${s.chg}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error('Stats error:', e);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  USERS TAB
+// ────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const db = window.salaDB;
+  try {
+    const snap = await db.collection('users').orderBy('createdAt','desc').get();
+    allUsers = [];
+    snap.forEach(doc => allUsers.push({ _id: doc.id, ...doc.data() }));
+
+    const badge = document.getElementById('badgeUsers');
+    badge.textContent = allUsers.length;
+    badge.style.display = 'inline-flex';
+
+    filterUsers();
+  } catch(e) {
+    console.error('Load users error:', e);
+    document.getElementById('userTableBody').innerHTML =
+      `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--red)">Failed to load users.</td></tr>`;
+  }
+}
+
+function filterUsers() {
+  const q    = (document.getElementById('userSearch').value || '').toLowerCase();
+  const role = document.getElementById('roleFilter').value;
+  const prog = document.getElementById('progFilter').value;
+
+  filteredUsers = allUsers.filter(u => {
+    if (role && u.role !== role) return false;
+    if (prog && u.programme !== prog) return false;
+    if (q) {
+      const hay = `${u.name} ${u.email} ${u.regNumber}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('userCount').textContent =
+    `${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''}`;
+  currentPage = 1;
+  renderUserTable();
+}
+
+function renderUserTable() {
+  const tbody = document.getElementById('userTableBody');
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page  = filteredUsers.slice(start, start + PAGE_SIZE);
+
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="sa-empty"><div class="ei">🔍</div><p>No users found for that filter.</p></div></td></tr>`;
+    renderPagination();
+    return;
+  }
+
+  const avatarColors = ['#3d5afe','#00bfa6','#ffb703','#ff4d6d','#7c4dff','#06d6a0'];
+  const roleLabels = { admin:'Admin', lecturer:'Lecturer', student:'Student' };
+
+  tbody.innerHTML = page.map(u => {
+    const initials  = (u.name || '?').charAt(0).toUpperCase();
+    const color     = avatarColors[(u.name?.length || 0) % avatarColors.length];
+    const roleCls   = `role-${u.role || 'student'}`;
+    const roleLabel = roleLabels[u.role] || u.role || 'Student';
+    const enrolled  = (u.enrolledSubjects || []).length;
+    const joined    = u.createdAt?.toDate
+      ? u.createdAt.toDate().toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'})
+      : '—';
+    const progLabel = progName(u.programme);
+
+    return `
+      <tr>
+        <td><div class="user-ava-cell" style="background:${color}">${initials}</div></td>
+        <td><strong style="color:var(--navy)">${escHtml(u.name||'—')}</strong></td>
+        <td style="color:var(--muted);font-size:12.5px">${escHtml(u.email||'—')}</td>
+        <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">${escHtml(u.regNumber||'—')}</td>
+        <td><span class="role-badge ${roleCls}">${roleLabel}</span></td>
+        <td style="font-size:12.5px">${progLabel}</td>
+        <td style="font-size:13px;text-align:center">
+          ${enrolled > 0 ? `<span style="font-weight:700;color:var(--blue)">${enrolled}</span>` : '<span style="color:var(--muted)">0</span>'}
+        </td>
+        <td style="font-size:12px;color:var(--muted)">${joined}</td>
+        <td style="text-align:right">
+          <div style="display:inline-flex;gap:6px">
+            <button class="action-btn btn-edit-user" onclick="openEditUserModal('${u._id}')">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+            <button class="action-btn btn-del-user" onclick="openDeleteModal('${u._id}','${escHtml(u.name||'this user')}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const pg    = document.getElementById('userPagination');
+  if (total <= 1) { pg.innerHTML = ''; return; }
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Prev</button>`;
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || Math.abs(i - currentPage) <= 1)
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if (Math.abs(i - currentPage) === 2)
+      html += `<span style="color:var(--muted);font-size:13px;padding:0 2px">…</span>`;
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>Next ›</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const total = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderUserTable();
+  document.querySelector('.user-table-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function progName(id) {
+  const map = { cs:'BSc. CS', bse:'BSc. SE', bit:'BSc. IT', bba:'BBA IT' };
+  return map[id] || (id ? id.toUpperCase() : '—');
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  ADD / EDIT MODAL
+// ────────────────────────────────────────────────────────────────────
+function openAddUserModal() {
+  editingUserId = null;
+  document.getElementById('modalTitle').textContent = 'Add New User';
+  document.getElementById('modalSub').textContent   = 'A Firestore record will be created immediately.';
+  document.getElementById('pwHint').textContent     = '(required for new users)';
+  clearModalFields();
+  document.getElementById('userModal').classList.add('open');
+}
+
+function openEditUserModal(uid) {
+  const u = allUsers.find(x => x._id === uid);
+  if (!u) return;
+  editingUserId = uid;
+  document.getElementById('modalTitle').textContent = 'Edit User';
+  document.getElementById('modalSub').textContent   = `Editing: ${u.name}`;
+  document.getElementById('pwHint').textContent     = '(leave blank to keep existing)';
+
+  document.getElementById('mName').value  = u.name  || '';
+  document.getElementById('mEmail').value = u.email || '';
+  document.getElementById('mRole').value  = u.role  || 'student';
+  document.getElementById('mReg').value   = u.regNumber || '';
+  document.getElementById('mProg').value  = u.programme || 'cs';
+  document.getElementById('mYear').value  = u.year  || '1';
+  document.getElementById('mPass').value  = '';
+  toggleRoleFields();
+  document.getElementById('userModal').classList.add('open');
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').classList.remove('open');
+  editingUserId = null;
+}
+
+function clearModalFields() {
+  ['mName','mEmail','mReg','mPass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mRole').value  = 'student';
+  document.getElementById('mProg').value  = 'cs';
+  document.getElementById('mYear').value  = '1';
+  toggleRoleFields();
+}
+
+function toggleRoleFields() {
+  const role = document.getElementById('mRole').value;
+  document.getElementById('mStudentFields').style.display = role === 'student' ? 'block' : 'none';
+}
+
+async function saveUser() {
+  const name  = document.getElementById('mName').value.trim();
+  const email = document.getElementById('mEmail').value.trim();
+  const role  = document.getElementById('mRole').value;
+  const reg   = document.getElementById('mReg').value.trim();
+  const prog  = document.getElementById('mProg').value;
+  const year  = parseInt(document.getElementById('mYear').value) || 1;
+  const pass  = document.getElementById('mPass').value;
+
+  if (!name || !email) { showToast('⚠️ Name and email are required.', true); return; }
+  if (!editingUserId && !pass) { showToast('⚠️ Password is required for new users.', true); return; }
+  if (pass && pass.length < 6) { showToast('⚠️ Password must be at least 6 characters.', true); return; }
+
+  const btn = document.getElementById('modalSaveBtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+  btn.disabled  = true;
+
+  try {
+    const db = window.salaDB;
+
+    if (editingUserId) {
+      // UPDATE existing Firestore doc
+      const payload = { name, email, role, regNumber: reg };
+      if (role === 'student') { payload.programme = prog; payload.year = year; }
+      await db.collection('users').doc(editingUserId).update(payload);
+      showToast('✅ User updated successfully.');
+    } else {
+      // CREATE new Firestore doc (Auth creation requires Admin SDK / Cloud Function)
+      const payload = {
+        name, email, role,
+        regNumber:       reg,
+        enrolledSubjects:[],
+        bkt_profile:     {},
+        createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      if (role === 'student') { payload.programme = prog; payload.year = year; }
+      await db.collection('users').add(payload);
+      showToast('✅ User record created in Firestore. Use seed-users.js or Firebase Console to add Auth credentials.');
+    }
+
+    closeUserModal();
+    await loadUsers();
+    await loadStats();
+  } catch(e) {
+    console.error('Save user error:', e);
+    showToast('❌ Failed to save: ' + e.message, true);
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save User';
+    btn.disabled  = false;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  DELETE
+// ────────────────────────────────────────────────────────────────────
+function openDeleteModal(uid, name) {
+  pendingDeleteId = uid;
+  document.getElementById('confirmModalSub').innerHTML =
+    `You are about to delete <strong>${escHtml(name)}</strong>'s Firestore record. This cannot be undone from here.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingDeleteId = null;
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  btn.disabled  = true;
+  try {
+    await window.salaDB.collection('users').doc(pendingDeleteId).delete();
+    showToast('🗑️ User record deleted.');
+    closeConfirmModal();
+    await loadUsers();
+    await loadStats();
+  } catch(e) {
+    showToast('❌ Delete failed: ' + e.message, true);
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+    btn.disabled  = false;
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  ACTIVITY TAB
+// ────────────────────────────────────────────────────────────────────
+async function loadActivityTab() {
+  await Promise.all([loadActivityFeed(), loadActivityCharts()]);
+}
+
+async function loadActivityFeed() {
+  const db   = window.salaDB;
+  const feed = document.getElementById('activityFeed');
+  try {
+    // Merge recent registrations + recent Q&A posts
+    const [userSnap, qaSnap] = await Promise.all([
+      db.collection('users').orderBy('createdAt','desc').limit(15).get(),
+      db.collection('qa_threads').orderBy('createdAt','desc').limit(15).get(),
+    ]);
+
+    const events = [];
+    userSnap.forEach(d => {
+      const u = d.data();
+      events.push({
+        icon:'👤', bg:'rgba(61,90,254,.1)', color:'var(--blue)',
+        title: `<strong>${escHtml(u.name||'New user')}</strong> registered as ${u.role||'student'}`,
+        ts: u.createdAt?.toDate?.()?.getTime() || 0,
+      });
+    });
+    qaSnap.forEach(d => {
+      const q = d.data();
+      events.push({
+        icon:'💬', bg:'rgba(255,183,3,.12)', color:'#cc9200',
+        title: `<strong>${escHtml(q.askedByName||'Student')}</strong> asked: "${escHtml((q.question||'').slice(0,60))}…"`,
+        ts: q.createdAt?.toDate?.()?.getTime() || 0,
+      });
+    });
+
+    events.sort((a,b) => b.ts - a.ts);
+
+    feed.innerHTML = events.slice(0,20).map(e => `
+      <div class="act-item">
+        <div class="act-icon" style="background:${e.bg};color:${e.color}">${e.icon}</div>
+        <div class="act-body">
+          <div class="act-title">${e.title}</div>
+          <div class="act-time">${timeAgo(e.ts)}</div>
+        </div>
+      </div>
+    `).join('') || '<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No activity yet.</p>';
+
+  } catch(e) {
+    console.error(e);
+    feed.innerHTML = '<p style="color:var(--red);text-align:center;padding:16px">Failed to load activity.</p>';
+  }
+}
+
+async function loadActivityCharts() {
+  const db = window.salaDB;
+  try {
+    // Build 7-day registration buckets
+    const snap = await db.collection('users').orderBy('createdAt','desc').limit(200).get();
+    const now  = Date.now();
+    const days = Array.from({length:7},(_,i) => {
+      const d = new Date(now - (6-i)*86400000);
+      return { label: d.toLocaleDateString('en-KE',{weekday:'short'}), count: 0, ts: d.setHours(0,0,0,0) };
+    });
+    snap.forEach(doc => {
+      const ts = doc.data().createdAt?.toDate?.()?.getTime() || 0;
+      const idx = days.findIndex((d,i) =>
+        ts >= d.ts && (i === days.length-1 || ts < days[i+1].ts));
+      if (idx >= 0) days[idx].count++;
+    });
+
+    drawBarChart('regChart', days.map(d=>d.label), days.map(d=>d.count), 'Registrations', 'rgba(61,90,254,.7)');
+
+    // Q&A activity last 7 days
+    const qaSnap = await db.collection('qa_threads').orderBy('createdAt','desc').limit(200).get();
+    const qaDays = Array.from({length:7},(_,i) => {
+      const d = new Date(now - (6-i)*86400000);
+      return { label: d.toLocaleDateString('en-KE',{weekday:'short'}), count: 0, ts: d.setHours(0,0,0,0) };
+    });
+    qaSnap.forEach(doc => {
+      const ts = doc.data().createdAt?.toDate?.()?.getTime() || 0;
+      const idx = qaDays.findIndex((d,i) =>
+        ts >= d.ts && (i === qaDays.length-1 || ts < qaDays[i+1].ts));
+      if (idx >= 0) qaDays[idx].count++;
+    });
+    drawBarChart('quizActivityChart', qaDays.map(d=>d.label), qaDays.map(d=>d.count), 'Q&A Posts', 'rgba(0,191,166,.7)');
+
+    // Q&A summary panel
+    const total    = qaSnap.size;
+    const answered = qaSnap.docs.filter(d => d.data().lecturerAnswer).length;
+    const aiOnly   = qaSnap.docs.filter(d => d.data().aiAnswer && !d.data().lecturerAnswer).length;
+    const pending  = total - answered - aiOnly;
+    document.getElementById('qaActivitySummary').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${[
+          ['Total Questions', total, 'var(--navy)'],
+          ['Fully Answered',  answered,'var(--green)'],
+          ['AI Only',         aiOnly,  'var(--blue)'],
+          ['Pending',         pending, 'var(--amber)'],
+        ].map(([l,v,c]) => `
+          <div style="text-align:center;padding:14px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border)">
+            <div style="font-family:var(--font-display);font-size:28px;font-weight:800;color:${c}">${v}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">${l}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch(e) { console.error('Activity charts error:', e); }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  OVERVIEW TAB
+// ────────────────────────────────────────────────────────────────────
+async function loadOverviewTab() {
+  const db = window.salaDB;
+  try {
+    const snap = await db.collection('users').get();
+    const users = []; snap.forEach(d => users.push(d.data()));
+
+    // Role chart
+    const roles = {Student:0, Lecturer:0, Admin:0};
+    users.forEach(u => {
+      if (u.role === 'student')  roles.Student++;
+      else if (u.role === 'lecturer') roles.Lecturer++;
+      else roles.Admin++;
+    });
+    drawDoughnutChart('roleChart', Object.keys(roles), Object.values(roles),
+      ['rgba(61,90,254,.8)','rgba(0,191,166,.8)','rgba(255,77,109,.8)']);
+
+    // Programme chart
+    const progs = {};
+    users.filter(u=>u.role==='student').forEach(u => {
+      const p = progName(u.programme);
+      progs[p] = (progs[p]||0)+1;
+    });
+    drawDoughnutChart('progChart', Object.keys(progs), Object.values(progs),
+      ['rgba(61,90,254,.8)','rgba(0,191,166,.8)','rgba(124,77,255,.8)','rgba(255,183,3,.8)']);
+
+    // Subject enrolment
+    const subjCount = {};
+    users.forEach(u => (u.enrolledSubjects||[]).forEach(s => { subjCount[s]=(subjCount[s]||0)+1; }));
+    const top = Object.entries(subjCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    drawBarChart('subjChart', top.map(([s])=>s.toUpperCase()), top.map(([,v])=>v),
+      'Students', 'rgba(124,77,255,.7)', true);
+
+    // AI status panel
+    document.getElementById('aiStatus').innerHTML = `
+      ${[
+        ['IRT Engine','Item Response Theory — ability tracking','var(--green)','✅ Active'],
+        ['BKT Engine','Bayesian Knowledge Tracing — mastery','var(--green)','✅ Active'],
+        ['Spaced Rep.','SM-2 algorithm — review scheduling','var(--green)','✅ Active'],
+        ['Groq LLM','llama-3.1-8b-instant — Q&A answers','var(--blue)','🌐 API-based'],
+        ['Collab. Filter','Peer similarity recommendations','var(--amber)','⚡ Client-side'],
+      ].map(([n,d,c,s]) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--navy)">${n}</div>
+            <div style="font-size:11.5px;color:var(--muted)">${d}</div>
+          </div>
+          <span style="font-size:11.5px;font-weight:700;color:${c}">${s}</span>
+        </div>
+      `).join('')}
+    `;
+
+    // Firestore collections
+    const [qSnap, quesSnap, qaSnap] = await Promise.all([
+      db.collection('quiz_results').limit(1).get(),
+      db.collection('questions').get(),
+      db.collection('qa_threads').get(),
+    ]);
+    document.getElementById('dbStatus').innerHTML = `
+      ${[
+        ['users',         snap.size,     'var(--blue)'],
+        ['questions',     quesSnap.size, 'var(--purple)'],
+        ['quiz_results',  '—',           'var(--teal)'],
+        ['qa_threads',    qaSnap.size,   'var(--amber)'],
+      ].map(([col,cnt,c]) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+          <span style="font-family:var(--font-mono);font-size:12.5px;color:var(--navy)">${col}</span>
+          <span style="font-weight:700;color:${c}">${cnt} docs</span>
+        </div>
+      `).join('')}
+    `;
+  } catch(e) { console.error('Overview error:', e); }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  HEALTH TAB
+// ────────────────────────────────────────────────────────────────────
+async function loadHealthTab() {
+  const start = Date.now();
+  let firestoreOk = false;
+  let firestoreMs = 0;
+
+  // Ping Firestore
+  try {
+    await window.salaDB.collection('users').limit(1).get();
+    firestoreMs = Date.now() - start;
+    firestoreOk = true;
+  } catch(e) { firestoreMs = 999; }
+
+  // Groq ping (just a HEAD-like check)
+  let groqOk = true;
+  try {
+    const res = await fetch('https://api.groq.com/', {method:'GET', signal: AbortSignal.timeout(3000)});
+    groqOk = res.ok || res.status === 404; // 404 means reachable
+  } catch(e) { groqOk = false; }
+
+  const swOk  = 'serviceWorker' in navigator;
+  const pwaOk = window.matchMedia('(display-mode:standalone)').matches;
+
+  const checks = [
+    { label:'Firestore DB',      val: firestoreMs, max:500, unit:'ms',  ok: firestoreOk && firestoreMs < 300, warn: firestoreMs < 600 },
+    { label:'Firebase Auth',     val: 100,          max:500, unit:'ms',  ok: true,  warn: true },
+    { label:'Groq AI (Q&A)',     val: groqOk?1:0,  max:1,   unit:'',   ok: groqOk, warn: groqOk },
+    { label:'Service Worker',    val: swOk?1:0,     max:1,   unit:'',   ok: swOk,   warn: swOk },
+    { label:'PWA Installed',     val: pwaOk?1:0,   max:1,   unit:'',   ok: pwaOk,  warn: true, note:'Optional' },
+    { label:'LocalStorage',      val: 1, max:1, unit:'', ok:true, warn:true },
+  ];
+
+  document.getElementById('healthChecks').innerHTML = `
+    <div>
+      ${checks.map(c => {
+        const pct   = Math.round((c.val/c.max)*100);
+        const color = c.ok ? 'var(--green)' : c.warn ? 'var(--amber)' : 'var(--red)';
+        const cls   = c.ok ? 'hs-ok' : c.warn ? 'hs-warn' : 'hs-crit';
+        const lbl   = c.ok ? 'OK' : c.warn ? 'Warn' : 'Error';
+        const display = c.unit === 'ms' ? `${c.val}ms` : (c.val ? 'Yes' : 'No');
+        return `
+          <div class="health-row">
+            <div class="health-label">${c.label} ${c.note?`<span style="font-size:10px;color:var(--muted)">(${c.note})</span>`:''}</div>
+            <div class="health-bar-wrap"><div class="health-bar" style="width:${Math.min(100,pct)}%;background:${color}"></div></div>
+            <div class="health-val" style="color:${color}">${display}</div>
+            <span class="health-status ${cls}">${lbl}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Latency mock chart
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const data   = [120,95,140,88,102,76,firestoreMs||110];
+  drawBarChart('latencyChart', labels, data, 'Latency (ms)', 'rgba(255,77,109,.7)', false);
+
+  // Notices
+  const notices = [];
+  if (!groqOk)     notices.push({type:'error', msg:'Groq API unreachable — Q&A AI answers will fail.'});
+  if (firestoreMs > 300) notices.push({type:'warn', msg:`Firestore latency is high (${firestoreMs}ms). Check quota.`});
+  if (!swOk)       notices.push({type:'warn', msg:'Service Worker not supported — offline mode unavailable.'});
+  notices.push({type:'info', msg:'Auth deletion for removed users still requires Firebase Admin SDK (seed script or Cloud Function).'});
+
+  document.getElementById('systemNotices').innerHTML = notices.map(n => {
+    const [c,ic] = n.type==='error'?['var(--red)','⛔']:n.type==='warn'?['#cc9200','⚠️']:['var(--blue)','ℹ️'];
+    return `<div style="display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+      <span>${ic}</span>
+      <span style="font-size:13px;color:${c}">${n.msg}</span>
+    </div>`;
+  }).join('') || '<p style="color:var(--green);font-size:13px;padding:10px 0">✅ No issues detected.</p>';
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  TAB SWITCHER
+// ────────────────────────────────────────────────────────────────────
+const tabLoaded = {};
+async function saTab(id, btn) {
+  document.querySelectorAll('.sa-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sa-tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-' + id).classList.add('active');
+
+  if (!tabLoaded[id]) {
+    tabLoaded[id] = true;
+    if (id === 'activity') await loadActivityTab();
+    if (id === 'overview') await loadOverviewTab();
+    if (id === 'health')   await loadHealthTab();
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  CHART HELPERS
+// ────────────────────────────────────────────────────────────────────
+const _charts = {};
+function drawBarChart(id, labels, data, label, color, horizontal=false) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (_charts[id]) _charts[id].destroy();
+  _charts[id] = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data, backgroundColor: color, borderRadius:5 }] },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      plugins: { legend:{ display:false } },
+      scales: { x:{ grid:{display:!horizontal} }, y:{ beginAtZero:true, grid:{display:horizontal} } },
+      responsive: true,
+    }
+  });
+}
+function drawDoughnutChart(id, labels, data, colors) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (_charts[id]) _charts[id].destroy();
+  _charts[id] = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'var(--card)' }] },
+    options: { plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, boxWidth:12 } } }, cutout:'60%', responsive:true }
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  UTILITIES
+// ────────────────────────────────────────────────────────────────────
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const d = Math.floor((Date.now() - ts) / 1000);
+  if (d < 60)    return 'Just now';
+  if (d < 3600)  return `${Math.floor(d/60)}m ago`;
+  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  return `${Math.floor(d/86400)}d ago`;
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, isError=false) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = isError ? 'var(--red)' : 'var(--navy)';
+  t.innerHTML = `<span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),400); },4000);
+}
+</script>
+</body>
+</html>

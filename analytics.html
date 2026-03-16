@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="sala.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+<script src="sala-ai-engine.js" defer></script>
+</head>
+<body>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-ava" id="userAva">?</div>
+    <div class="user-info"><strong id="userName">Loading...</strong><span id="userRole">Student</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main Menu</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='subjects.html'"><span class="nav-icon">📚</span><span>My Subjects</span></div>
+    <div class="nav-item" onclick="location.href='quiz.html'"><span class="nav-icon">🧠</span><span>Take a Quiz</span></div>
+    <div class="nav-item" onclick="location.href='recommendations.html'"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
+    <div class="nav-item" onclick="nav('qa.html')"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
+    <div class="nav-item active"><span class="nav-icon">📈</span><span>Analytics</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="location.href='login.html'">
+      <span>🚪</span><span>Logout</span>
+    </button>
+  </div>
+</div>
+
+<div class="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title">Analytics</span>
+  <span class="topbar-sub">/ My Performance</span>
+  <div class="topbar-spacer"></div>
+</div>
+
+<div class="main-wrap">
+<div class="page-body">
+
+  <!-- ✅ Stat summary cards — populated by JS -->
+  <div class="stat-grid mb-24" id="analyticsStats">
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Total Quizzes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value" id="statAvg">—</div>
+      <div class="stat-label">Average Score</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-value" id="statTime">—</div>
+      <div class="stat-label">Total Study Time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-value" id="statBest">—</div>
+      <div class="stat-label">Best Subject</div>
+    </div>
+  </div>
+
+  <!-- Velocity chart -->
+  <div class="card mb-24">
+    <div class="card-title"><i class="fa-solid fa-chart-line"></i> Learning Velocity (Score Over Time)</div>
+    <div id="velocityEmpty" style="display:none;text-align:center;padding:40px;color:var(--muted)">
+      Take your first quiz to see your score trend here.
+    </div>
+    <canvas id="velocityChart" height="100"></canvas>
+  </div>
+
+  <div class="grid-2 mb-24">
+    <!-- Accuracy doughnut -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-bullseye"></i> Overall Accuracy</div>
+      <div style="max-width:220px;margin:0 auto">
+        <canvas id="accuracyChart" height="220"></canvas>
+      </div>
+      <div id="accuracyLegend" style="display:flex;justify-content:center;gap:24px;margin-top:16px;font-size:13px"></div>
+    </div>
+
+    <!-- Subject breakdown -->
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-laptop-code"></i> Subject Breakdown</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Subject</th><th>Quizzes</th><th>Avg Score</th></tr>
+        </thead>
+        <tbody id="subjectTableBody">
+          <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BKT Mastery per skill -->
+  <div class="card mb-24">
+    <div class="card-title"><i class="fa-solid fa-brain"></i> AI Skill Mastery Breakdown</div>
+    <div id="masteryBars">
+      <p style="color:var(--muted);font-size:13px;padding:8px 0">Take quizzes to build your mastery profile.</p>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── HELPER: subject id → display name ──────────────────────────────────
+function getSubjectName(subjectId) {
+  const catalog = window.PROGRAMME_CATALOG;
+  if (!catalog) return subjectId.toUpperCase();
+  for (const prog of Object.values(catalog)) {
+    for (const lvl of Object.values(prog.levels)) {
+      const found = lvl.subjects.find(s => s.id === subjectId);
+      if (found) return `${found.icon} ${found.name}`;
+    }
+  }
+  return subjectId.toUpperCase();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    // ✅ Wait for PROGRAMME_CATALOG before rendering subject names
+    const waitForCatalog = setInterval(async () => {
+      if (window.PROGRAMME_CATALOG) {
+        clearInterval(waitForCatalog);
+        await loadLiveAnalytics(user.uid);
+      }
+    }, 50);
+    setTimeout(() => clearInterval(waitForCatalog), 5000);
+  });
+});
+
+async function loadLiveAnalytics(uid) {
+  const db = firebase.firestore();
+
+  try {
+    // ✅ Fetch quiz history AND user profile in parallel
+    const [historySnap, userDoc] = await Promise.all([
+      db.collection('users').doc(uid)
+        .collection('quiz_history')
+        .orderBy('completedAt', 'desc')
+        .get(),
+      db.collection('users').doc(uid).get()
+    ]);
+
+    const bkt = userDoc.exists ? (userDoc.data().bkt_profile || {}) : {};
+
+    // ✅ Always render mastery even if no quiz history
+    renderMasteryBars(bkt);
+
+    if (historySnap.empty) {
+      showEmptyState();
+      return;
+    }
+
+    // ✅ Convert Firestore Timestamps to JS timestamps immediately
+    const quizzes = [];
+    historySnap.forEach(doc => {
+      const d = doc.data();
+      quizzes.push({
+        ...d,
+        _ts: d.completedAt?.toDate?.()?.getTime() || Date.now()
+      });
+    });
+
+    renderStatCards(quizzes);
+    renderVelocityChart(quizzes);
+    renderAccuracyChart(quizzes);
+    renderSubjectTable(quizzes);
+
+  } catch (error) {
+    console.error('Analytics Error:', error);
+  }
+}
+
+// ── EMPTY STATE ────────────────────────────────────────────────────────
+function showEmptyState() {
+  document.getElementById('statTotal').textContent = '0';
+  document.getElementById('statAvg').textContent = 'N/A';
+  document.getElementById('statTime').textContent = '0h';
+  document.getElementById('statBest').textContent = 'N/A';
+
+  document.getElementById('velocityEmpty').style.display = 'block';
+  document.getElementById('velocityChart').style.display = 'none';
+
+  document.getElementById('subjectTableBody').innerHTML =
+    '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Take your first quiz to see stats!</td></tr>';
+}
+
+// ── STAT CARDS ─────────────────────────────────────────────────────────
+function renderStatCards(quizzes) {
+  const total   = quizzes.length;
+  const avgScore = Math.round(quizzes.reduce((s, q) => s + (q.score || 0), 0) / total);
+  const totalSec = quizzes.reduce((s, q) => s + (q.timeSpent || 0), 0);
+  const hours    = Math.floor(totalSec / 3600);
+  const mins     = Math.floor((totalSec % 3600) / 60);
+  const timeStr  = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+  // Best subject = highest average score with at least 2 quizzes
+  const subMap = {};
+  quizzes.forEach(q => {
+    const s = q.subject || 'general';
+    if (!subMap[s]) subMap[s] = { total: 0, count: 0 };
+    subMap[s].total += q.score || 0;
+    subMap[s].count++;
+  });
+  const bestEntry = Object.entries(subMap)
+    .filter(([, v]) => v.count >= 1)
+    .sort((a, b) => (b[1].total / b[1].count) - (a[1].total / a[1].count))[0];
+  const bestSubject = bestEntry ? getSubjectName(bestEntry[0]) : 'N/A';
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statAvg').textContent   = avgScore + '%';
+  document.getElementById('statTime').textContent  = timeStr;
+  document.getElementById('statBest').textContent  = bestSubject;
+}
+
+// ── VELOCITY CHART ─────────────────────────────────────────────────────
+function renderVelocityChart(quizzes) {
+  const canvas = document.getElementById('velocityChart');
+  if (!canvas) return;
+
+  // ✅ Show real dates, not "Quiz 1, Quiz 2"
+  const ordered = [...quizzes].reverse(); // oldest first
+  const labels  = ordered.map(q => {
+    const d = new Date(q._ts);
+    return `${d.getDate()}/${d.getMonth() + 1}`;
+  });
+  const scores  = ordered.map(q => q.score || 0);
+
+  // Rolling 3-quiz average trendline
+  const trend = scores.map((_, i) => {
+    const window3 = scores.slice(Math.max(0, i - 2), i + 1);
+    return Math.round(window3.reduce((a, b) => a + b, 0) / window3.length);
+  });
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Score',
+          data: scores,
+          borderColor: '#3d5afe',
+          backgroundColor: 'rgba(61,90,254,0.07)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#3d5afe',
+        },
+        {
+          label: '3-Quiz Trend',
+          data: trend,
+          borderColor: '#00bfa6',
+          borderDash: [6, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 2,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
+        x: { ticks: { maxRotation: 45 } }
+      },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y}%` } }
+      }
+    }
+  });
+}
+
+// ── ACCURACY DOUGHNUT ──────────────────────────────────────────────────
+function renderAccuracyChart(quizzes) {
+  const ctx = document.getElementById('accuracyChart');
+  if (!ctx) return;
+
+  const totalCorrect = quizzes.reduce((s, q) => s + (q.correct || 0), 0);
+  const totalQs      = quizzes.reduce((s, q) => s + (q.totalQuestions || 0), 0);
+  const totalWrong   = Math.max(0, totalQs - totalCorrect);
+  const pct          = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 100) : 0;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Incorrect'],
+      datasets: [{
+        data: [totalCorrect, totalWrong],
+        backgroundColor: ['#00bfa6', '#ff4d6d'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        // Centre text showing overall %
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } }
+      }
+    },
+    plugins: [{
+      id: 'centreText',
+      afterDraw(chart) {
+        const { ctx: c, chartArea: { left, right, top, bottom } } = chart;
+        const cx = (left + right) / 2, cy = (top + bottom) / 2;
+        c.save();
+        c.font = 'bold 22px Sora, sans-serif';
+        c.fillStyle = '#0f1535';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(pct + '%', cx, cy);
+        c.restore();
+      }
+    }]
+  });
+
+  document.getElementById('accuracyLegend').innerHTML = `
+    <span><span style="color:#00bfa6;font-weight:700">●</span> Correct: ${totalCorrect}</span>
+    <span><span style="color:#ff4d6d;font-weight:700">●</span> Incorrect: ${totalWrong}</span>
+    <span style="color:var(--muted)">/ ${totalQs} total questions</span>
+  `;
+}
+
+// ── SUBJECT TABLE ──────────────────────────────────────────────────────
+function renderSubjectTable(quizzes) {
+  const tbody = document.getElementById('subjectTableBody');
+  if (!tbody) return;
+
+  const subMap = {};
+  quizzes.forEach(q => {
+    const s = q.subject || 'general';
+    if (!subMap[s]) subMap[s] = { count: 0, total: 0 };
+    subMap[s].count++;
+    subMap[s].total += q.score || 0;
+  });
+
+  const sorted = Object.entries(subMap)
+    .map(([id, v]) => ({ id, count: v.count, avg: Math.round(v.total / v.count) }))
+    .sort((a, b) => b.avg - a.avg);
+
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">No data yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sorted.map(row => {
+    const badgeCls = row.avg >= 75 ? 'badge-green' : row.avg >= 50 ? 'badge-amber' : 'badge-red';
+    // ✅ Human-readable subject name from PROGRAMME_CATALOG
+    const name = getSubjectName(row.id);
+    return `
+      <tr>
+        <td style="font-weight:600">${name}</td>
+        <td>${row.count}</td>
+        <td><span class="badge ${badgeCls}">${row.avg}%</span></td>
+      </tr>`;
+  }).join('');
+}
+
+// ── BKT MASTERY BARS ───────────────────────────────────────────────────
+// ✅ New section — was completely missing from the original file
+function renderMasteryBars(bkt) {
+  const container = document.getElementById('masteryBars');
+  if (!container) return;
+
+  const skills = Object.entries(bkt)
+    .map(([id, val]) => ({ id, pct: Math.round(val * 100) }))
+    .sort((a, b) => b.pct - a.pct);
+
+  if (skills.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px 0">Take quizzes to build your mastery profile.</p>';
+    return;
+  }
+
+  container.innerHTML = skills.map(s => {
+    const color = s.pct < 50 ? 'var(--red)' : s.pct < 75 ? 'var(--amber)' : 'var(--green)';
+    const label = s.id.replace(/_/g, ' ');
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:140px;font-size:13px;font-weight:500;color:var(--text);text-transform:capitalize;flex-shrink:0">${label}</div>
+        <div style="flex:1;height:8px;background:var(--surface2);border-radius:99px;overflow:hidden">
+          <div style="width:${s.pct}%;height:100%;background:${color};border-radius:99px;transition:width 1s ease"></div>
+        </div>
+        <div style="width:38px;text-align:right;font-size:13px;font-weight:700;color:${color}">${s.pct}%</div>
+      </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Lecturer Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="sala.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+<style>
+/* ── Admin-specific overrides ─────────────────────────────── */
+.admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.admin-stat{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;
+}
+.admin-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.admin-stat-icon{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.admin-stat-body .val{font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.admin-stat-body .lbl{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;overflow-x:auto}
+.tab-btn{
+  background:none;border:none;font-family:var(--font-b);font-weight:600;font-size:13.5px;
+  color:var(--muted);cursor:pointer;padding:10px 18px;border-radius:8px 8px 0 0;
+  transition:all .2s;position:relative;white-space:nowrap;display:flex;align-items:center;gap:7px;
+}
+.tab-btn:hover{color:var(--navy);background:rgba(15,21,53,.03)}
+.tab-btn.active{color:var(--blue)}
+.tab-btn.active::after{content:'';position:absolute;bottom:-2px;left:0;width:100%;height:3px;background:var(--blue);border-radius:3px 3px 0 0}
+.tab-badge{
+  background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  padding:1px 6px;border-radius:99px;min-width:18px;text-align:center;
+}
+.tab-pane{display:none}
+.tab-pane.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Collapsible forms */
+.form-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px}
+.form-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.form-card-title{font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--navy)}
+.collapse-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--muted);font-size:20px;padding:4px;
+  transition:color .15s;line-height:1;
+}
+.collapse-btn:hover{color:var(--red)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.full-width{grid-column:1/-1}
+.form-label{display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:7px}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-family:var(--font-b);font-size:13.5px;color:var(--navy);transition:all .2s;background:var(--card);
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(61,90,254,.1)}
+.form-textarea{resize:vertical;min-height:90px}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.option-wrapper{display:flex;align-items:center;gap:8px}
+.option-wrapper span{font-weight:700;color:var(--muted);font-size:13px;width:18px;flex-shrink:0}
+.btn-submit{
+  padding:12px 20px;background:linear-gradient(135deg,var(--blue),var(--blue-soft));
+  color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;
+  cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-b);
+}
+.btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(61,90,254,.3)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* Data tables */
+.data-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-sm);border:1.5px solid var(--border)}
+.data-table th{background:var(--surface);padding:12px 16px;text-align:left;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);border-bottom:1.5px solid var(--border)}
+.data-table td{padding:13px 16px;font-size:13.5px;color:var(--text2);border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover td{background:rgba(61,90,254,.02)}
+
+/* Status badges */
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.status-risk{background:rgba(255,77,109,.1);color:var(--red)}
+.status-review{background:rgba(255,183,3,.1);color:#cc9200}
+.status-track{background:rgba(6,214,160,.12);color:#05b382}
+.status-none{background:var(--surface2);color:var(--muted)}
+
+/* Filter bar */
+.filter-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.filter-select{
+  padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;
+  font-family:var(--font-b);font-size:13px;color:var(--text2);background:var(--card);
+  cursor:pointer;transition:border .18s;
+}
+.filter-select:focus{border-color:var(--blue);outline:none}
+.filter-count{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* Student risk card in overview */
+.risk-list{display:flex;flex-direction:column;gap:0}
+.risk-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.risk-item:last-child{border-bottom:none}
+.risk-item:hover{background:var(--surface)}
+.risk-ava{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-size:13px;font-weight:700;color:#fff;
+}
+.risk-info{flex:1;min-width:0}
+.risk-name{font-size:13.5px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.risk-sub{font-size:11.5px;color:var(--muted)}
+.risk-mastery{font-size:13px;font-weight:800;flex-shrink:0}
+.risk-action-btn{
+  padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;
+  border:1.5px solid var(--border);background:var(--card);cursor:pointer;
+  color:var(--text2);transition:all .15s;font-family:var(--font-b);flex-shrink:0;
+}
+.risk-action-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* Intervention modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,21,53,.65);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease}
+.modal-box{background:var(--card);width:90%;max-width:560px;border-radius:20px;box-shadow:0 25px 60px rgba(15,21,53,.2);animation:slideUp .3s ease;overflow:hidden}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{font-family:var(--font-d);font-size:17px;font-weight:700;color:var(--navy)}
+.modal-close{background:var(--surface2);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);transition:.2s}
+.modal-close:hover{background:rgba(255,77,109,.1);color:var(--red)}
+.modal-body{padding:24px;max-height:70vh;overflow-y:auto}
+
+/* Student detail expand */
+.student-detail{display:none;background:var(--surface);border-top:1px solid var(--border);padding:16px 20px}
+.student-detail.open{display:block}
+.skill-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.skill-label{font-size:12.5px;font-weight:600;color:var(--text2);width:130px;flex-shrink:0;text-transform:capitalize}
+.skill-bar{flex:1;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.skill-fill{height:100%;border-radius:99px}
+
+/* Overview grid */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.overview-full{grid-column:1/-1}
+
+/* Activity pulse */
+.pulse-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Toast */
+#toastMsg{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:13px 18px;border-radius:10px;font-weight:600;font-size:13.5px;transform:translateY(100px);opacity:0;transition:all .3s ease;z-index:2000;box-shadow:0 4px 16px rgba(6,214,160,.3);display:flex;align-items:center;gap:10px}
+#toastMsg.show{transform:translateY(0);opacity:1}
+
+@media(max-width:1024px){.admin-stat-grid{grid-template-columns:repeat(2,1fr)}.overview-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}.full-width{grid-column:1}.admin-stat-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">🎓</div><div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div></div>
+  <div class="sidebar-user"><div class="user-ava" id="userAva">?</div><div class="user-info"><strong id="userName">Loading…</strong><span id="userRole">Staff</span></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Staff Portal</div>
+    <div class="nav-item active"><span class="nav-icon">👨‍🏫</span><span>Lecturer Portal</span></div>
+    <div class="nav-item" id="superAdminNavLink" style="display:none" onclick="location.href='superadmin.html'"><span class="nav-icon">🛡️</span><span>Super Admin</span></div>
+  </nav>
+  <div class="sidebar-footer"><button class="logout-btn" onclick="window.handleLogout()"><span>🚪</span><span>Logout</span></button></div>
+</div>
+
+<div class="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title">Lecturer Portal</span>
+  <span class="topbar-sub">/ Staff Dashboard</span>
+  <div class="topbar-spacer"></div>
+  <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode">
+    <i class="fa-solid fa-moon" id="darkToggleIcon"></i>
+  </button>
+  <button class="btn btn-sm btn-primary" onclick="refreshAll()" style="gap:6px;margin-left:6px">
+    <i class="fa-solid fa-rotate-right"></i> Refresh
+  </button>
+</div>
+
+<div class="main-wrap">
+<div class="page-body">
+
+  <!-- Summary stat row -->
+  <div class="admin-stat-grid" id="adminStats">
+    <div class="admin-stat"><div class="admin-stat-icon" style="background:rgba(61,90,254,.1)">👥</div><div class="admin-stat-body"><div class="val" id="sTotal">—</div><div class="lbl">Total Students</div></div></div>
+    <div class="admin-stat"><div class="admin-stat-icon" style="background:rgba(255,77,109,.1)">🚨</div><div class="admin-stat-body"><div class="val" id="sRisk">—</div><div class="lbl">At Risk</div></div></div>
+    <div class="admin-stat"><div class="admin-stat-icon" style="background:rgba(6,214,160,.1)">✅</div><div class="admin-stat-body"><div class="val" id="sTrack">—</div><div class="lbl">On Track</div></div></div>
+    <div class="admin-stat"><div class="admin-stat-icon" style="background:rgba(255,183,3,.1)">📝</div><div class="admin-stat-body"><div class="val" id="sQuizToday">—</div><div class="lbl">Quizzes Today</div></div></div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-overview',this)"><i class="fa-solid fa-gauge-high"></i> Overview</button>
+    <button class="tab-btn" id="tabBtnAnalytics" onclick="switchTab('tab-analytics',this)"><i class="fa-solid fa-chart-line"></i> Student Analytics <span class="tab-badge" id="riskBadge" style="display:none">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-questions',this)"><i class="fa-solid fa-clipboard-question"></i> Question Bank</button>
+    <button class="tab-btn" onclick="switchTab('tab-resources',this)"><i class="fa-solid fa-book-open"></i> Resources</button>
+    <button class="tab-btn" onclick="switchTab('tab-qa',this)"><i class="fa-solid fa-comments"></i> Q&amp;A <span class="tab-badge" id="pendingQABadge" style="display:none">0</span></button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: OVERVIEW
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-overview" class="tab-pane active">
+    <div class="overview-grid">
+
+      <!-- At-Risk Students -->
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> At-Risk Students</span>
+          <button class="btn btn-sm btn-danger" onclick="openBulkAlert()" id="bulkAlertBtn" style="display:none">
+            <i class="fa-solid fa-bell"></i> Alert All
+          </button>
+        </div>
+        <div id="atRiskList"><p style="color:var(--muted);font-size:13px;padding:8px 0">Loading…</p></div>
+      </div>
+
+      <!-- No Quiz Yet -->
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-circle-minus" style="color:var(--muted)"></i> Haven't Taken Any Quiz</div>
+        <div id="noQuizList"><p style="color:var(--muted);font-size:13px;padding:8px 0">Loading…</p></div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card overview-full">
+        <div class="card-title"><i class="fa-solid fa-bolt" style="color:var(--amber)"></i> Recent Quiz Activity</div>
+        <div id="recentActivity"><p style="color:var(--muted);font-size:13px">Loading…</p></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="tab-analytics" class="tab-pane">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <select class="filter-select" id="filterProgramme" onchange="applyFilters()">
+        <option value="">All Programmes</option>
+        <option value="cs">BSc. Computer Science</option>
+        <option value="bse">BSc. Software Engineering</option>
+        <option value="bbit">BSc. BBIT</option>
+        <option value="it">BSc. Information Technology</option>
+      </select>
+      <select class="filter-select" id="filterLevel" onchange="applyFilters()">
+        <option value="">All Levels</option>
+        <option value="y1s1">Year 1 – Sem 1</option>
+        <option value="y1s2">Year 1 – Sem 2</option>
+        <option value="y2s1">Year 2 – Sem 1</option>
+        <option value="y2s2">Year 2 – Sem 2</option>
+        <option value="y3s1">Year 3 – Sem 1</option>
+        <option value="y3s2">Year 3 – Sem 2</option>
+        <option value="y4s1">Year 4 – Sem 1</option>
+        <option value="y4s2">Year 4 – Sem 2</option>
+      </select>
+      <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+        <option value="">All Statuses</option>
+        <option value="risk">At Risk</option>
+        <option value="review">Needs Review</option>
+        <option value="track">On Track</option>
+        <option value="none">No Data</option>
+      </select>
+      <button class="btn btn-sm btn-secondary" onclick="clearFilters()">Clear</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <!-- Students table with expandable rows -->
+    <table class="data-table" id="analyticsTable">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Programme / Level</th>
+          <th>Avg Mastery</th>
+          <th>Quizzes</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="studentTableBody">
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading students…
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: QUESTION BANK
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-questions" class="tab-pane">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h3 style="color:var(--navy);font-family:var(--font-d);margin-bottom:4px">Question Bank</h3>
+        <p style="color:var(--muted);font-size:13px">Questions are pulled by the AI engine during quizzes based on subject and difficulty.</p>
+      </div>
+      <button class="btn-submit" onclick="toggleQForm()" style="width:auto;padding:10px 18px">
+        <i class="fa-solid fa-plus"></i> Add Question
+      </button>
+    </div>
+
+    <!-- Collapsible question form -->
+    <div id="qFormWrap" style="display:none">
+      <div class="form-card">
+        <div class="form-card-header">
+          <span class="form-card-title">📝 New Question</span>
+          <button class="collapse-btn" onclick="toggleQForm()">✕</button>
+        </div>
+        <form id="addQuestionForm">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Course / Subject</label>
+              <select class="form-select" id="qSubject" required>
+                <option value="">Select subject…</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Skill Tag <span style="font-weight:400;color:var(--muted)">(AI uses this)</span></label>
+              <input type="text" class="form-input" id="qSkill" placeholder="e.g. binary_trees, sql_joins" required>
+            </div>
+            <div class="full-width">
+              <label class="form-label">Question Text</label>
+              <textarea class="form-textarea" id="qText" placeholder="e.g. What is the time complexity of binary search?" required></textarea>
+            </div>
+            <div class="full-width">
+              <label class="form-label">Answer Options</label>
+              <div class="options-grid">
+                <div class="option-wrapper"><span>A</span><input type="text" class="form-input" id="opt0" placeholder="Option A" required></div>
+                <div class="option-wrapper"><span>B</span><input type="text" class="form-input" id="opt1" placeholder="Option B" required></div>
+                <div class="option-wrapper"><span>C</span><input type="text" class="form-input" id="opt2" placeholder="Option C" required></div>
+                <div class="option-wrapper"><span>D</span><input type="text" class="form-input" id="opt3" placeholder="Option D" required></div>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Correct Answer</label>
+              <select class="form-select" id="qCorrect" required>
+                <option value="0">Option A</option>
+                <option value="1">Option B</option>
+                <option value="2">Option C</option>
+                <option value="3">Option D</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Hint for Students</label>
+              <input type="text" class="form-input" id="qHint" placeholder="A helpful hint without giving the answer">
+            </div>
+            <div class="full-width">
+              <label class="form-label">Difficulty — <span id="diffVal" style="color:var(--blue);font-weight:700">0.5</span> &nbsp;<span style="color:var(--muted);font-size:11px">(0.1 = very easy · 1.0 = very hard)</span></label>
+              <input type="range" id="qDiffSlider" min="0.1" max="1.0" step="0.1" value="0.5"
+                     style="width:100%;accent-color:var(--blue)"
+                     oninput="document.getElementById('diffVal').textContent=this.value">
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:20px">
+            <button type="submit" class="btn-submit" id="qSubmitBtn" style="flex:1">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Upload Question
+            </button>
+            <button type="button" onclick="toggleQForm()" class="btn-submit"
+                    style="background:var(--surface);color:var(--text2);border:1.5px solid var(--border);width:auto;padding:12px 18px">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Questions table -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <select class="filter-select" id="qFilterSubject" onchange="loadQuestionsTable()">
+        <option value="">All subjects</option>
+      </select>
+      <span id="qCount" style="font-size:13px;color:var(--muted)"></span>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Question</th><th>Subject</th><th>Skill</th><th>Difficulty</th><th>Action</th></tr></thead>
+      <tbody id="questionsTableBody">
+        <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Select a subject above to preview questions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: RESOURCES
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-resources" class="tab-pane">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h3 style="color:var(--navy);font-family:var(--font-d);margin-bottom:4px">Resource Library</h3>
+        <p style="color:var(--muted);font-size:13px">Students see these in their subject portal. The AI recommends them when a student scores below 60% in a skill.</p>
+      </div>
+      <button class="btn-submit" onclick="toggleRForm()" style="width:auto;padding:10px 18px;background:linear-gradient(135deg,var(--teal),var(--green))">
+        <i class="fa-solid fa-plus"></i> Add Resource
+      </button>
+    </div>
+
+    <!-- Collapsible resource form -->
+    <div id="rFormWrap" style="display:none">
+      <div class="form-card">
+        <div class="form-card-header">
+          <span class="form-card-title">📚 New Study Material</span>
+          <button class="collapse-btn" onclick="toggleRForm()">✕</button>
+        </div>
+        <form id="addResourceForm">
+          <div class="form-grid">
+            <div class="full-width">
+              <label class="form-label">Resource Title</label>
+              <input type="text" class="form-input" id="rTitle" placeholder="e.g. Introduction to Binary Trees – YouTube" required>
+            </div>
+            <div>
+              <label class="form-label">Subject</label>
+              <select class="form-select" id="rSubject" required>
+                <option value="">Select subject…</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Target Skill Tag</label>
+              <input type="text" class="form-input" id="rSkill" placeholder="e.g. binary_trees" required>
+            </div>
+            <div class="full-width">
+              <label class="form-label">Resource URL</label>
+              <input type="url" class="form-input" id="rUrl" placeholder="https://youtube.com/…" required>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:20px">
+            <button type="submit" class="btn-submit" style="flex:1;background:linear-gradient(135deg,var(--teal),var(--green))">
+              <i class="fa-solid fa-link"></i> Save Resource
+            </button>
+            <button type="button" onclick="toggleRForm()" class="btn-submit"
+                    style="background:var(--surface);color:var(--text2);border:1.5px solid var(--border);width:auto;padding:12px 18px">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>Title</th><th>Subject</th><th>Skill Tag</th><th>Link</th><th>Action</th></tr></thead>
+      <tbody id="resourcesTableBody">
+        <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No resources yet. Click "Add Resource" to get started.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB: Q&A FORUM
+  ═══════════════════════════════════════════════════════ -->
+  <div id="tab-qa" class="tab-pane">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h3 style="color:var(--navy);font-family:var(--font-d);margin-bottom:4px">Student Q&amp;A</h3>
+        <p style="color:var(--muted);font-size:13px">
+          AI answers instantly when a student asks. Add your expert response below any question.
+        </p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select class="filter-select" id="qaFilterSubject" onchange="loadQATab()">
+          <option value="">All subjects</option>
+        </select>
+        <select class="filter-select" id="qaFilterStatus" onchange="loadQATab()">
+          <option value="">All statuses</option>
+          <option value="pending">⏳ Pending — no answer yet</option>
+          <option value="ai_only">🤖 AI answered only</option>
+          <option value="answered">✅ Fully answered</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="adminQAList">
+      <p style="color:var(--muted);text-align:center;padding:40px">
+        <i class="fa-solid fa-comments" style="font-size:32px;opacity:.3;display:block;margin-bottom:12px"></i>
+        Click the Q&amp;A tab to load student questions.
+      </p>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<!-- ═══ INTERVENTION MODAL ═════════════════════════════════ -->
+<div class="modal-overlay" id="interventionModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modalTitle">Send Support to Student</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Student summary -->
+      <div id="modalStudentInfo" style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:20px"></div>
+
+      <!-- Weak skills -->
+      <div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px">🧠 Skill Mastery Breakdown</div>
+        <div id="modalSkills"></div>
+      </div>
+
+      <!-- Action options -->
+      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px">📋 Intervention Actions</div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="modalActions">
+
+        <div style="background:rgba(61,90,254,.05);border:1.5px solid rgba(61,90,254,.15);border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px">💬 Send Personalised Message</div>
+          <textarea id="msgText" class="form-textarea" style="min-height:80px"
+                    placeholder="e.g. Hi Brian, I noticed you're struggling with binary trees. I've uploaded a new video resource that should help. Let me know if you need extra support!"></textarea>
+          <button onclick="sendMessage()" class="btn-submit" style="margin-top:10px;width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-soft))">
+            <i class="fa-solid fa-paper-plane"></i> Save Message to Student Profile
+          </button>
+        </div>
+
+        <div style="background:rgba(255,183,3,.05);border:1.5px solid rgba(255,183,3,.2);border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:700;color:#cc9200;margin-bottom:8px">🎯 Assign Practice Quiz</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Flag the weakest subjects for priority practice. The student will see these highlighted in their dashboard.</div>
+          <button onclick="flagPriority()" class="btn-submit" style="width:100%;background:linear-gradient(135deg,var(--amber),#ff6b2b)">
+            <i class="fa-solid fa-flag"></i> Flag Weak Subjects for Practice
+          </button>
+        </div>
+
+        <div style="background:rgba(6,214,160,.05);border:1.5px solid rgba(6,214,160,.2);border-radius:12px;padding:14px">
+          <div style="font-size:13px;font-weight:700;color:#05b382;margin-bottom:8px">📅 Schedule Check-in</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Add a note to follow up with this student. Visible only to staff.</div>
+          <div style="display:flex;gap:10px">
+            <input type="date" id="checkinDate" class="form-input" style="flex:1">
+            <button onclick="scheduleCheckin()" class="btn-submit" style="width:auto;padding:10px 16px;background:linear-gradient(135deg,var(--teal),var(--green))">
+              <i class="fa-solid fa-calendar-plus"></i> Schedule
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk alert modal -->
+<div class="modal-overlay" id="bulkModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>🚨 Alert All At-Risk Students</h3>
+      <button class="modal-close" onclick="document.getElementById('bulkModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13.5px;color:var(--text2);margin-bottom:16px">This message will be saved to each at-risk student's profile as a staff notification.</p>
+      <div style="background:rgba(255,77,109,.05);border:1.5px solid rgba(255,77,109,.15);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--red)">
+        <i class="fa-solid fa-triangle-exclamation"></i> <span id="bulkCount"></span>
+      </div>
+      <textarea id="bulkMsgText" class="form-textarea" style="min-height:100px"
+                placeholder="e.g. Your current quiz scores suggest you may need extra support. Please review your weak areas in SALA and reach out if you need help."></textarea>
+      <button onclick="sendBulkAlert()" class="btn-submit" style="width:100%;margin-top:14px;background:linear-gradient(135deg,var(--red),#ff8c42)">
+        <i class="fa-solid fa-bell"></i> Send to All At-Risk Students
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toastMsg"><i class="fa-solid fa-check-circle"></i> <span id="toastText">Done!</span></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const waitForFirebase = setInterval(() => {
+    if (typeof firebase !== 'undefined' && firebase.apps.length && window.salaDB) {
+      clearInterval(waitForFirebase);
+
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+
+        const doc = await window.salaDB.collection('users').doc(user.uid).get();
+        if (!doc.exists) { window.location.href = 'login.html'; return; }
+
+        const role = doc.data().role;
+        if (role !== 'admin' && role !== 'lecturer') {
+          alert('⛔ Access denied. Staff only.');
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        // Authorised — boot the page
+        // Show "Back to Super Admin" link if user is an admin visiting lecturer portal
+        if (role === 'admin') {
+          const saLink = document.getElementById('superAdminNavLink');
+          if (saLink) saLink.style.display = 'flex';
+        }
+        initPage();
+      });
+    }
+  }, 50);
+  setTimeout(() => clearInterval(waitForFirebase), 8000);
+});
+
+// ══════════════════════════════════════════════════════════════
+// PAGE STATE
+// ══════════════════════════════════════════════════════════════
+let allStudents   = []; // full student list with quiz counts + mastery
+let filteredStudents = [];
+let currentModalStudent = null;
+
+function initPage() {
+  const waitCatalog = setInterval(() => {
+    if (window.PROGRAMME_CATALOG) {
+      clearInterval(waitCatalog);
+      loadSubjectsIntoDropdowns();
+      loadAllData();
+    }
+  }, 50);
+  setTimeout(() => clearInterval(waitCatalog), 5000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'tab-resources') loadResources();
+  if (id === 'tab-questions') loadQuestionsTable();
+  if (id === 'tab-qa')        loadQATab();
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUBJECT DROPDOWNS — from PROGRAMME_CATALOG
+// ══════════════════════════════════════════════════════════════
+function loadSubjectsIntoDropdowns() {
+  const catalog = window.PROGRAMME_CATALOG;
+  const selects  = ['qSubject','rSubject','qFilterSubject','qaFilterSubject'];
+  const seen     = new Set();
+
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const hasAll = id === 'qFilterSubject';
+    el.innerHTML = hasAll
+      ? '<option value="">All subjects</option>'
+      : '<option value="">Select subject…</option>';
+
+    Object.values(catalog).forEach(prog => {
+      Object.values(prog.levels).forEach(lvl => {
+        lvl.subjects.forEach(s => {
+          if (seen.has(s.id + id)) return;
+          seen.add(s.id + id);
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.icon} ${s.name}`;
+          el.appendChild(opt);
+        });
+      });
+    });
+  });
+}
+
+function getSubjectName(id) {
+  const catalog = window.PROGRAMME_CATALOG;
+  if (!catalog) return id.toUpperCase();
+  for (const prog of Object.values(catalog))
+    for (const lvl of Object.values(prog.levels)) {
+      const s = lvl.subjects.find(s => s.id === id);
+      if (s) return `${s.icon} ${s.name}`;
+    }
+  return id.toUpperCase();
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOAD ALL DATA  (students + recent activity)
+// ══════════════════════════════════════════════════════════════
+async function loadAllData() {
+  await Promise.all([loadStudents(), loadRecentActivity()]);
+}
+
+async function refreshAll() {
+  showToast('🔄 Refreshing…');
+  await loadAllData();
+  if (document.getElementById('tab-resources').classList.contains('active')) loadResources();
+  if (document.getElementById('tab-questions').classList.contains('active'))  loadQuestionsTable();
+}
+
+async function loadStudents() {
+  const db = window.salaDB;
+  try {
+    const snap = await db.collection('users').where('role','==','student').get();
+
+    const students = [];
+    for (const doc of snap.docs) {
+      const d = doc.data();
+      // Get quiz count from subcollection
+      const hSnap = await db.collection('users').doc(doc.id).collection('quiz_history')
+        .orderBy('completedAt','desc').limit(20).get();
+
+      const history = [];
+      hSnap.forEach(h => {
+        const hd = h.data();
+        history.push({ ...hd, _ts: hd.completedAt?.toDate?.()?.getTime() || 0 });
+      });
+
+      const bkt    = d.bkt_profile || {};
+      const scores = Object.values(bkt);
+      const mastery = scores.length
+        ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length * 100) : 0;
+
+      let status = 'none';
+      if (history.length > 0) {
+        status = mastery < 50 ? 'risk' : mastery < 75 ? 'review' : 'track';
+      }
+
+      // Today's quizzes
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const quizzesToday = history.filter(q => q._ts >= todayStart.getTime()).length;
+
+      students.push({
+        uid:        doc.id,
+        name:       d.name       || 'Unknown',
+        email:      d.email      || '—',
+        programme:  d.programme  || null,
+        level:      d.level      || null,
+        regNumber:  d.regNumber  || '—',
+        bkt,
+        mastery,
+        status,
+        quizCount:  history.length,
+        quizzesToday,
+        history,
+        enrolledSubjects: d.enrolledSubjects || [],
+        notifications: d.notifications || [],
+      });
+    }
+
+    allStudents = students;
+    filteredStudents = [...students];
+
+    updateSummaryStats();
+    renderOverview();
+    renderStudentsTable(filteredStudents);
+
+  } catch (e) {
+    console.error('Load students error:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUMMARY STATS
+// ══════════════════════════════════════════════════════════════
+function updateSummaryStats() {
+  const total   = allStudents.length;
+  const risk    = allStudents.filter(s => s.status === 'risk').length;
+  const track   = allStudents.filter(s => s.status === 'track').length;
+  const todayQs = allStudents.reduce((sum, s) => sum + s.quizzesToday, 0);
+
+  document.getElementById('sTotal').textContent      = total;
+  document.getElementById('sRisk').textContent       = risk;
+  document.getElementById('sTrack').textContent      = track;
+  document.getElementById('sQuizToday').textContent  = todayQs;
+
+  // Risk badge on tab
+  const badge = document.getElementById('riskBadge');
+  if (risk > 0) { badge.textContent = risk; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+// OVERVIEW TAB
+// ══════════════════════════════════════════════════════════════
+function renderOverview() {
+  // At-risk list
+  const atRisk = allStudents.filter(s => s.status === 'risk').slice(0, 8);
+  const bulkBtn = document.getElementById('bulkAlertBtn');
+  if (atRisk.length > 0) bulkBtn.style.display = 'inline-flex';
+  else bulkBtn.style.display = 'none';
+
+  document.getElementById('atRiskList').innerHTML = atRisk.length ? `
+    <div class="risk-list">
+      ${atRisk.map(s => riskItemHTML(s)).join('')}
+    </div>
+  ` : '<p style="color:var(--muted);font-size:13px;padding:8px 0">🎉 No students currently at risk.</p>';
+
+  // No-quiz list
+  const noQuiz = allStudents.filter(s => s.quizCount === 0).slice(0, 8);
+  document.getElementById('noQuizList').innerHTML = noQuiz.length ? `
+    <div class="risk-list">
+      ${noQuiz.map(s => `
+        <div class="risk-item">
+          <div class="risk-ava" style="background:${avatarColor(s.name)}">${s.name.charAt(0).toUpperCase()}</div>
+          <div class="risk-info">
+            <div class="risk-name">${s.name}</div>
+            <div class="risk-sub">${window.getProgrammeLabel?.(s.programme) || '—'} · ${window.getLevelLabel?.(s.programme, s.level) || '—'}</div>
+          </div>
+          <button class="risk-action-btn" onclick="openIntervention('${s.uid}')">
+            <i class="fa-solid fa-bell"></i> Nudge
+          </button>
+        </div>`).join('')}
+    </div>
+  ` : '<p style="color:var(--muted);font-size:13px;padding:8px 0">✅ All students have taken at least one quiz.</p>';
+}
+
+function riskItemHTML(s) {
+  const color = s.mastery < 40 ? 'var(--red)' : 'var(--amber)';
+  return `
+    <div class="risk-item">
+      <div class="risk-ava" style="background:${avatarColor(s.name)}">${s.name.charAt(0).toUpperCase()}</div>
+      <div class="risk-info">
+        <div class="risk-name">${s.name}</div>
+        <div class="risk-sub">${window.getLevelLabel?.(s.programme, s.level) || '—'} · ${s.quizCount} quizzes taken</div>
+      </div>
+      <span class="risk-mastery" style="color:${color}">${s.mastery}%</span>
+      <button class="risk-action-btn" onclick="openIntervention('${s.uid}')">
+        <i class="fa-solid fa-hand-holding-heart"></i> Help
+      </button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RECENT ACTIVITY
+// ══════════════════════════════════════════════════════════════
+async function loadRecentActivity() {
+  const db = window.salaDB;
+  try {
+    // Collect last 10 quiz events across all students
+    const events = [];
+    for (const s of allStudents) {
+      if (s.history.length) {
+        events.push({ student: s.name, ...s.history[0] });
+      }
+    }
+    events.sort((a,b) => b._ts - a._ts);
+    const recent = events.slice(0, 8);
+
+    const feed = document.getElementById('recentActivity');
+    if (!recent.length) {
+      feed.innerHTML = '<p style="color:var(--muted);font-size:13px">No quiz activity yet.</p>';
+      return;
+    }
+
+    feed.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:0">
+        ${recent.map(e => {
+          const score  = e.score || 0;
+          const color  = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--amber)' : 'var(--red)';
+          const emoji  = score >= 80 ? '🎉' : score >= 60 ? '👍' : '⚠️';
+          const when   = timeAgo(e._ts);
+          const subj   = getSubjectName(e.subject || '');
+          return `
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+              <div class="pulse-dot" style="background:${color}"></div>
+              <div style="flex:1;font-size:13px;color:var(--text2)">
+                <strong style="color:var(--navy)">${e.student}</strong>
+                completed a <strong>${subj}</strong> quiz — scored
+                <span style="color:${color};font-weight:700">${score}%</span>
+                ${emoji}
+              </div>
+              <div style="font-size:11.5px;color:var(--muted);flex-shrink:0">${when}</div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  } catch(e) { console.error(e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANALYTICS TABLE
+// ══════════════════════════════════════════════════════════════
+function applyFilters() {
+  const prog   = document.getElementById('filterProgramme').value;
+  const level  = document.getElementById('filterLevel').value;
+  const status = document.getElementById('filterStatus').value;
+
+  filteredStudents = allStudents.filter(s => {
+    if (prog   && s.programme !== prog)   return false;
+    if (level  && s.level     !== level)  return false;
+    if (status && s.status    !== status) return false;
+    return true;
+  });
+
+  document.getElementById('filterCount').textContent =
+    `Showing ${filteredStudents.length} of ${allStudents.length} students`;
+
+  renderStudentsTable(filteredStudents);
+}
+
+function clearFilters() {
+  document.getElementById('filterProgramme').value = '';
+  document.getElementById('filterLevel').value     = '';
+  document.getElementById('filterStatus').value    = '';
+  filteredStudents = [...allStudents];
+  document.getElementById('filterCount').textContent = '';
+  renderStudentsTable(filteredStudents);
+}
+
+function renderStudentsTable(students) {
+  const tbody = document.getElementById('studentTableBody');
+
+  if (!students.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No students match the current filters.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = students.map(s => {
+    const badgeClass = { risk:'status-risk', review:'status-review', track:'status-track', none:'status-none' }[s.status];
+    const badgeText  = { risk:'⚠️ At Risk', review:'🔶 Needs Review', track:'✅ On Track', none:'— No Data' }[s.status];
+    const badgeColor = s.mastery < 50 ? 'var(--red)' : s.mastery < 75 ? 'var(--amber)' : 'var(--teal)';
+    const badgeBg    = s.mastery < 50 ? 'rgba(255,77,109,.1)' : s.mastery < 75 ? 'rgba(255,183,3,.1)' : 'rgba(0,191,166,.1)';
+    const progLabel  = window.getProgrammeLabel?.(s.programme) || '—';
+    const lvlLabel   = window.getLevelLabel?.(s.programme, s.level) || '—';
+
+    return `
+      <tr id="row-${s.uid}">
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor(s.name)};
+                 display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">
+              ${s.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:13.5px;color:var(--navy)">${s.name}</div>
+              <div style="font-size:11px;color:var(--muted)">${s.regNumber}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:12.5px">${s.email}</td>
+        <td>
+          <div style="font-size:12px;font-weight:700;color:var(--blue)">${progLabel}</div>
+          <div style="font-size:11px;color:var(--muted)">${lvlLabel}</div>
+        </td>
+        <td>
+          <span style="background:${badgeBg};color:${badgeColor};padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700">
+            ${s.status === 'none' ? '—' : s.mastery + '%'}
+          </span>
+        </td>
+        <td><strong>${s.quizCount}</strong> <span style="color:var(--muted);font-size:11.5px">quizzes</span></td>
+        <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="toggleDetail('${s.uid}')"
+                    style="padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;
+                           border:1.5px solid var(--border);background:var(--card);cursor:pointer;
+                           color:var(--text2);font-family:var(--font-b);transition:all .15s"
+                    onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
+              <i class="fa-solid fa-chevron-down"></i> Skills
+            </button>
+            <button onclick="openIntervention('${s.uid}')"
+                    style="padding:5px 10px;border-radius:7px;font-size:11.5px;font-weight:600;
+                           border:1.5px solid rgba(61,90,254,.25);background:rgba(61,90,254,.06);
+                           cursor:pointer;color:var(--blue);font-family:var(--font-b);transition:all .15s">
+              <i class="fa-solid fa-hand-holding-heart"></i> Support
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr id="detail-${s.uid}">
+        <td colspan="7" style="padding:0">
+          <div class="student-detail" id="detailBody-${s.uid}">
+            ${renderSkillBars(s)}
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function toggleDetail(uid) {
+  const body = document.getElementById(`detailBody-${uid}`);
+  body.classList.toggle('open');
+}
+
+function renderSkillBars(s) {
+  const bkt    = s.bkt;
+  const skills = Object.entries(bkt).map(([k,v])=>({k,v})).sort((a,b)=>a.v-b.v);
+  if (!skills.length) return '<p style="font-size:13px;color:var(--muted);padding:4px 0">No skill data yet — student needs to take a quiz first.</p>';
+
+  return `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;padding:4px 0">
+      ${skills.map(({k,v}) => {
+        const pct   = Math.round(v * 100);
+        const color = pct < 50 ? 'var(--red)' : pct < 75 ? 'var(--amber)' : 'var(--green)';
+        return `
+          <div class="skill-row">
+            <div class="skill-label">${k.replace(/_/g,' ')}</div>
+            <div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div style="font-size:12px;font-weight:700;color:${color};width:34px;text-align:right;flex-shrink:0">${pct}%</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// INTERVENTION MODAL
+// ══════════════════════════════════════════════════════════════
+function openIntervention(uid) {
+  const s = allStudents.find(x => x.uid === uid);
+  if (!s) return;
+  currentModalStudent = s;
+
+  document.getElementById('modalTitle').textContent = `Support — ${s.name}`;
+
+  // Student info block
+  const progLabel = window.getProgrammeLabel?.(s.programme) || '—';
+  const lvlLabel  = window.getLevelLabel?.(s.programme, s.level) || '—';
+  const badgeColor = s.mastery < 50 ? 'var(--red)' : s.mastery < 75 ? 'var(--amber)' : 'var(--teal)';
+  document.getElementById('modalStudentInfo').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;border-radius:50%;background:${avatarColor(s.name)};
+           display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;flex-shrink:0">
+        ${s.name.charAt(0).toUpperCase()}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:15px;color:var(--navy)">${s.name}</div>
+        <div style="font-size:12.5px;color:var(--muted)">${s.email} · ${progLabel} · ${lvlLabel}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${badgeColor}">${s.mastery}%</div>
+        <div style="font-size:11px;color:var(--muted)">Avg Mastery</div>
+      </div>
+    </div>`;
+
+  document.getElementById('modalSkills').innerHTML = renderSkillBars(s);
+
+  // Pre-fill message
+  const weakSkills = Object.entries(s.bkt)
+    .sort((a,b)=>a[1]-b[1]).slice(0,3)
+    .map(([k])=>k.replace(/_/g,' ')).join(', ');
+  document.getElementById('msgText').value =
+    `Hi ${s.name.split(' ')[0]}, I noticed your recent quiz performance shows you may need extra support${weakSkills ? ` in: ${weakSkills}` : ''}. I've flagged some resources in SALA to help. Don't hesitate to reach out!`;
+
+  document.getElementById('checkinDate').value =
+    new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+
+  document.getElementById('interventionModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('interventionModal').classList.remove('open');
+  currentModalStudent = null;
+}
+
+async function sendMessage() {
+  if (!currentModalStudent) return;
+  const msg = document.getElementById('msgText').value.trim();
+  if (!msg) { showToast('⚠️ Please write a message first.', true); return; }
+
+  try {
+    await window.salaDB.collection('users').doc(currentModalStudent.uid).update({
+      notifications: firebase.firestore.FieldValue.arrayUnion({
+        from:      'lecturer',
+        message:   msg,
+        type:      'support',
+        read:      false,
+        createdAt: new Date().toISOString(),
+      })
+    });
+    showToast('✅ Message saved to student profile.');
+    closeModal();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Failed to send message.', true);
+  }
+}
+
+async function flagPriority() {
+  if (!currentModalStudent) return;
+  const s = currentModalStudent;
+
+  // Find weakest enrolled subjects
+  const weak = s.enrolledSubjects.filter(id => {
+    const skills = Object.entries(s.bkt).filter(([k]) => k.startsWith(id));
+    if (!skills.length) return true;
+    const avg = skills.reduce((sum,[,v])=>sum+v,0) / skills.length;
+    return avg < 0.6;
+  });
+
+  try {
+    await window.salaDB.collection('users').doc(s.uid).update({
+      prioritySubjects: weak,
+      lastFlaggedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast(`✅ Flagged ${weak.length} subjects for priority practice.`);
+    closeModal();
+  } catch(e) {
+    showToast('❌ Failed to flag.', true);
+  }
+}
+
+async function scheduleCheckin() {
+  if (!currentModalStudent) return;
+  const date = document.getElementById('checkinDate').value;
+  if (!date) { showToast('⚠️ Please pick a date.', true); return; }
+
+  try {
+    await window.salaDB.collection('staff_notes').add({
+      studentUid: currentModalStudent.uid,
+      studentName: currentModalStudent.name,
+      type:        'checkin',
+      date,
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast(`📅 Check-in scheduled for ${date}.`);
+    closeModal();
+  } catch(e) {
+    showToast('❌ Failed to schedule.', true);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// BULK ALERT
+// ══════════════════════════════════════════════════════════════
+function openBulkAlert() {
+  const atRisk = allStudents.filter(s => s.status === 'risk');
+  document.getElementById('bulkCount').textContent =
+    `${atRisk.length} student${atRisk.length !== 1 ? 's' : ''} currently at risk will receive this message.`;
+  document.getElementById('bulkModal').classList.add('open');
+}
+
+async function sendBulkAlert() {
+  const msg = document.getElementById('bulkMsgText').value.trim();
+  if (!msg) { showToast('⚠️ Please write a message first.', true); return; }
+
+  const atRisk = allStudents.filter(s => s.status === 'risk');
+  const db = window.salaDB;
+  let count = 0;
+
+  try {
+    const batch = db.batch();
+    for (const s of atRisk) {
+      const ref = db.collection('users').doc(s.uid);
+      batch.update(ref, {
+        notifications: firebase.firestore.FieldValue.arrayUnion({
+          from: 'lecturer', message: msg, type: 'bulk_alert',
+          read: false, createdAt: new Date().toISOString(),
+        })
+      });
+      count++;
+    }
+    await batch.commit();
+    showToast(`✅ Alert sent to ${count} students.`);
+    document.getElementById('bulkModal').classList.remove('open');
+    document.getElementById('bulkMsgText').value = '';
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Failed to send bulk alert.', true);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// QUESTION BANK
+// ══════════════════════════════════════════════════════════════
+function toggleQForm() {
+  const w = document.getElementById('qFormWrap');
+  const open = w.style.display === 'none';
+  w.style.display = open ? 'block' : 'none';
+  if (open) w.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function loadQuestionsTable() {
+  const subjectId = document.getElementById('qFilterSubject').value;
+  const tbody     = document.getElementById('questionsTableBody');
+  const countEl   = document.getElementById('qCount');
+
+  if (!subjectId) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">Select a subject above to load its questions.</td></tr>';
+    countEl.textContent = '';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+  try {
+    const snap = await window.salaDB.collection('questions')
+      .where('subject','==', subjectId).get();
+
+    if (snap.empty) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No questions for this subject yet.</td></tr>`;
+      countEl.textContent = '';
+      return;
+    }
+
+    countEl.textContent = `${snap.size} question${snap.size !== 1 ? 's' : ''}`;
+
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const diff   = parseFloat(d.difficulty) || 0.5;
+      const diffColor = diff <= 0.3 ? 'var(--green)' : diff <= 0.6 ? 'var(--amber)' : 'var(--red)';
+      const diffLabel = diff <= 0.3 ? 'Easy' : diff <= 0.6 ? 'Medium' : 'Hard';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">
+          <span title="${d.text}">${d.text}</span>
+        </td>
+        <td><span style="font-size:12px;font-weight:700;color:var(--muted)">${getSubjectName(d.subject)}</span></td>
+        <td><span style="background:rgba(61,90,254,.08);color:var(--blue);padding:3px 8px;border-radius:5px;font-size:11.5px;font-weight:600">${d.skill || '—'}</span></td>
+        <td><span style="color:${diffColor};font-weight:700;font-size:13px">${diffLabel} (${diff})</span></td>
+        <td>
+          <button onclick="deleteQuestion('${doc.id}')"
+                  style="padding:5px 10px;border-radius:7px;background:rgba(255,77,109,.1);border:none;
+                         color:var(--red);cursor:pointer;font-size:12px;transition:all .15s"
+                  onmouseover="this.style.background='rgba(255,77,109,.2)'"
+                  onmouseout="this.style.background='rgba(255,77,109,.1)'">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+  } catch(e) {
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--red)">Failed to load questions.</td></tr>';
+  }
+}
+
+async function deleteQuestion(id) {
+  if (!confirm('Delete this question?')) return;
+  try {
+    await window.salaDB.collection('questions').doc(id).delete();
+    showToast('🗑️ Question deleted.');
+    loadQuestionsTable();
+  } catch(e) {
+    showToast('❌ Failed to delete.', true);
+  }
+}
+
+document.getElementById('addQuestionForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('qSubmitBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+  btn.disabled = true;
+
+  const subjectId = document.getElementById('qSubject').value;
+  let level = null;
+  for (const prog of Object.values(window.PROGRAMME_CATALOG))
+    for (const [lk, lv] of Object.entries(prog.levels))
+      if (lv.subjects.find(s => s.id === subjectId)) { level = lk; break; }
+
+  try {
+    await window.salaDB.collection('questions').add({
+      subject:    subjectId,
+      level,
+      text:       document.getElementById('qText').value.trim(),
+      options: [
+        document.getElementById('opt0').value.trim(),
+        document.getElementById('opt1').value.trim(),
+        document.getElementById('opt2').value.trim(),
+        document.getElementById('opt3').value.trim(),
+      ],
+      correct:    parseInt(document.getElementById('qCorrect').value),
+      skill:      document.getElementById('qSkill').value.toLowerCase().trim().replace(/\s+/g,'_'),
+      hint:       document.getElementById('qHint').value.trim(),
+      difficulty: parseFloat(document.getElementById('qDiffSlider').value),
+      createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('✅ Question uploaded!');
+    e.target.reset();
+    document.getElementById('diffVal').textContent = '0.5';
+    toggleQForm();
+    loadQuestionsTable();
+  } catch(err) {
+    showToast('❌ Upload failed.', true);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// RESOURCES
+// ══════════════════════════════════════════════════════════════
+function toggleRForm() {
+  const w = document.getElementById('rFormWrap');
+  const open = w.style.display === 'none';
+  w.style.display = open ? 'block' : 'none';
+  if (open) w.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+document.getElementById('addResourceForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+  btn.disabled = true;
+
+  try {
+    await window.salaDB.collection('resources').add({
+      title:     document.getElementById('rTitle').value.trim(),
+      subject:   document.getElementById('rSubject').value,
+      skill:     document.getElementById('rSkill').value.toLowerCase().trim().replace(/\s+/g,'_'),
+      url:       document.getElementById('rUrl').value.trim(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('📚 Resource saved!');
+    e.target.reset();
+    toggleRForm();
+    loadResources();
+  } catch(err) {
+    showToast('❌ Failed to save.', true);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+});
+
+async function loadResources() {
+  const tbody = document.getElementById('resourcesTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr>';
+
+  try {
+    const snap = await window.salaDB.collection('resources').orderBy('createdAt','desc').get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No resources yet. Click "Add Resource" to get started.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong style="font-size:13.5px">${d.title}</strong></td>
+        <td><span style="font-size:13px;font-weight:600;color:var(--navy)">${getSubjectName(d.subject)}</span></td>
+        <td><span style="background:rgba(0,191,166,.1);color:var(--teal);padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600">${d.skill}</span></td>
+        <td><a href="${d.url}" target="_blank" style="color:var(--blue);font-weight:600;font-size:13px">Open <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px"></i></a></td>
+        <td>
+          <button onclick="deleteResource('${doc.id}')"
+                  style="padding:5px 10px;border-radius:7px;background:rgba(255,77,109,.1);border:none;
+                         color:var(--red);cursor:pointer;font-size:12px">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--red)">Failed to load resources.</td></tr>';
+  }
+}
+
+async function deleteResource(id) {
+  if (!confirm('Delete this resource?')) return;
+  try {
+    await window.salaDB.collection('resources').doc(id).delete();
+    showToast('🗑️ Resource deleted.');
+    loadResources();
+  } catch(e) {
+    showToast('❌ Could not delete.', true);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════════════
+function avatarColor(name) {
+  const colors = ['#3d5afe','#00bfa6','#ffb703','#ff4d6d','#7c4dff','#06d6a0'];
+  return colors[(name?.length || 0) % colors.length];
+}
+
+function timeAgo(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60)    return 'Just now';
+  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function showToast(msg = 'Done!', isError = false) {
+  const el   = document.getElementById('toastMsg');
+  const text = document.getElementById('toastText');
+  text.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--green)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Close modals on overlay click
+document.getElementById('interventionModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('bulkModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ══════════════════════════════════════════════════════════════
+// Q&A TAB
+// ══════════════════════════════════════════════════════════════
+async function loadQATab() {
+  const list     = document.getElementById('adminQAList');
+  const subjectF = document.getElementById('qaFilterSubject').value;
+  const statusF  = document.getElementById('qaFilterStatus').value;
+  const db       = window.salaDB;
+
+  list.innerHTML = '<p style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Loading questions…</p>';
+
+  try {
+    let query = db.collection('qa_threads').limit(80);
+    if (subjectF) query = query.where('subject', '==', subjectF);
+    if (statusF)  query = query.where('status',  '==', statusF);
+
+    const snap = await query.get();
+    const threads = [];
+    snap.forEach(doc => threads.push({ id: doc.id, ...doc.data() }));
+    
+    threads.sort((a, b) => {
+      const aTs = a.createdAt?.toDate?.()?.getTime() || 0;
+      const bTs = b.createdAt?.toDate?.()?.getTime() || 0;
+      return bTs - aTs;
+    });
+
+    const pending = threads.filter(t => !t.lecturerAnswer).length;
+    const badge   = document.getElementById('pendingQABadge');
+    if (badge) { badge.textContent = pending; badge.style.display = pending ? 'inline-flex' : 'none'; }
+
+    if (!threads.length) {
+      list.innerHTML = '<p style="text-align:center;padding:40px;color:var(--muted)">No questions found for the selected filters.</p>';
+      return;
+    }
+
+    list.innerHTML = threads.map(t => {
+      const subj        = getSubjectName(t.subject);
+      const when        = t.createdAt?.toDate ? timeAgo(t.createdAt.toDate().getTime()) : '';
+      const hasLecturer = !!t.lecturerAnswer;
+      const hasAI       = !!t.aiAnswer;
+      const statusColor = hasLecturer ? 'var(--green)' : hasAI ? 'var(--blue)' : 'var(--amber)';
+      const statusLabel = hasLecturer ? '✅ Answered' : hasAI ? '🤖 AI Only' : '⏳ Pending';
+
+      return `
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);
+                    margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow-sm)">
+
+          <!-- Question -->
+          <div style="padding:16px 20px">
+            <div style="font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.4">
+              ${t.question}
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--muted)">
+                <i class="fa-regular fa-user"></i> ${t.askedByName || 'Student'}
+                ${t.askedByRole === 'lecturer'
+                  ? '<span style="font-size:10px;font-weight:700;color:var(--teal);background:rgba(0,191,166,.1);padding:1px 6px;border-radius:3px;margin-left:4px">LECTURER</span>'
+                  : ''}
+              </span>
+              <span style="font-size:12px;color:var(--muted)">📚 ${subj}</span>
+              <span style="font-size:12px;color:var(--muted)"><i class="fa-regular fa-clock"></i> ${when}</span>
+              <span style="font-size:12px;font-weight:700;color:${statusColor};
+                     background:${statusColor}18;padding:2px 9px;border-radius:99px">
+                ${statusLabel}
+              </span>
+            </div>
+          </div>
+
+          <!-- AI answer -->
+          ${hasAI ? `
+            <div style="padding:14px 20px;background:rgba(61,90,254,.025);border-top:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px;
+                          display:flex;align-items:center;gap:6px">
+                <i class="fa-solid fa-robot"></i> Claude AI Answer
+              </div>
+              <div style="font-size:13.5px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${t.aiAnswer}</div>
+            </div>
+          ` : ''}
+
+          <!-- Lecturer answer (read) -->
+          ${hasLecturer ? `
+            <div style="padding:14px 20px;background:rgba(0,191,166,.025);border-top:1px solid var(--border)">
+              <div style="font-size:12px;font-weight:700;color:#009e8a;margin-bottom:8px;
+                          display:flex;align-items:center;gap:6px">
+                <i class="fa-solid fa-chalkboard-teacher"></i>
+                ${t.lecturerName || 'Lecturer'}'s Answer
+              </div>
+              <div style="font-size:13.5px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${t.lecturerAnswer}</div>
+            </div>
+          ` : ''}
+
+          <!-- Reply / update box -->
+          <div style="padding:14px 20px;background:var(--surface);border-top:1px solid var(--border);
+                      display:flex;gap:10px;align-items:flex-end">
+            <textarea id="qa-reply-${t.id}"
+                      style="flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
+                             font-family:var(--font-b);font-size:13.5px;resize:none;min-height:42px;
+                             max-height:120px;background:var(--card);color:var(--navy);
+                             transition:border .18s"
+                      onfocus="this.style.borderColor='var(--blue)'"
+                      onblur="this.style.borderColor='var(--border)'"
+                      placeholder="${hasLecturer ? 'Update your answer…' : 'Add your expert response…'}"></textarea>
+            <button onclick="saveQAReply('${t.id}')"
+                    style="padding:10px 18px;background:var(--teal);color:#fff;border:none;
+                           border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;
+                           font-family:var(--font-b);white-space:nowrap;flex-shrink:0;
+                           transition:background .18s"
+                    onmouseover="this.style.background='var(--blue)'"
+                    onmouseout="this.style.background='var(--teal)'">
+              <i class="fa-solid fa-paper-plane"></i>
+              reply
+            </button>
+          </div>
+
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    console.error('QA load error:', e);
+    list.innerHTML = '<p style="text-align:center;padding:30px;color:var(--red)">Failed to load Q&A. Check console.</p>';
+  }
+}
+
+async function saveQAReply(threadId) {
+  const ta   = document.getElementById('qa-reply-' + threadId);
+  const text = ta.value.trim();
+  if (!text) { showToast('⚠️ Please write a response first.', true); return; }
+
+  const btn  = ta.nextElementSibling;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  btn.disabled  = true;
+
+  try {
+    await window.salaDB.collection('qa_threads').doc(threadId).update({
+      lecturerAnswer:     text,
+      lecturerName:       window._cachedUserData?.name || 'Lecturer',
+      lecturerAnsweredAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status:             'answered',
+    });
+    showToast('✅ Answer saved. Students can now see your response.');
+    await loadQATab();
+  } catch(e) {
+    console.error('QA reply error:', e);
+    showToast('❌ Failed to save. Try again.', true);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+}
+</script>
+
+
+</body>
+</html>

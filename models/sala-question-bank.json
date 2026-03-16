@@ -1,0 +1,554 @@
+{
+    "ds": [
+        {
+            "id": "ds_1",
+            "text": "Which data structure uses LIFO (Last-In, First-Out) principle?",
+            "options": [
+                "Queue",
+                "Stack",
+                "Linked List",
+                "Tree"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "easy",
+            "skill": "stacks",
+            "hint": "Think about how plates are usually stacked.",
+            "feedback": {
+                "correct": "Correct! A Stack follows the Last-In, First-Out (LIFO) principle.",
+                "wrong": "Incorrect. A Stack uses LIFO, while a Queue uses FIFO."
+            }
+        },
+        {
+            "id": "ds_2",
+            "text": "What is the time complexity for searching an element in a balanced Binary Search Tree?",
+            "options": [
+                "O(n)",
+                "O(log n)",
+                "O(n log n)",
+                "O(1)"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "medium",
+            "skill": "trees",
+            "hint": "Consider how many levels you might traverse in a balanced tree.",
+            "feedback": {
+                "correct": "Correct! In a balanced BST, search time is logarithmic with respect to the number of nodes.",
+                "wrong": "Incorrect. In a balanced BST, each comparison effectively halves the search space, leading to O(log n) complexity."
+            }
+        },
+        {
+            "id": "ds_3",
+            "text": "Which of the following is NOT a type of graph traversal?",
+            "options": [
+                "Breadth-First Search (BFS)",
+                "Depth-First Search (DFS)",
+                "Heap-First Search (HFS)",
+                "Dijkstra's Algorithm (used for shortest path, but involves traversal)"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "medium",
+            "skill": "graphs",
+            "hint": "Think about common graph algorithms; which one isn't typically categorized as a direct 'traversal' method?",
+            "feedback": {
+                "correct": "Correct! Heap-First Search is not a standard graph traversal algorithm. BFS and DFS are primary traversal methods, and Dijkstra's involves traversal for pathfinding.",
+                "wrong": "Incorrect. Heap-First Search is not a recognized graph traversal method."
+            }
+        },
+        {
+            "id": "ds_4",
+            "text": "What is the primary advantage of using a hash table for data storage and retrieval?",
+            "options": [
+                "Elements are always sorted",
+                "Guaranteed O(1) worst-case time complexity for all operations",
+                "Fast average-case time complexity for insertions, deletions, and searches",
+                "Minimal memory consumption"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "hash tables",
+            "hint": "Consider the typical performance characteristics, especially regarding collision handling and average scenarios.",
+            "feedback": {
+                "correct": "Correct! Hash tables excel at providing fast average-case O(1) performance for these operations, though worst-case can be O(n) due to collisions.",
+                "wrong": "Incorrect. While often very fast, O(1) is not guaranteed in worst-case scenarios, and elements are not inherently sorted."
+            }
+        },
+        {
+            "id": "ds_5",
+            "text": "In a singly linked list, which of these operations typically requires traversing the entire list in the worst case?",
+            "options": [
+                "Inserting at the head",
+                "Deleting the head",
+                "Inserting at a specific position (not head/tail) without previous pointer",
+                "Accessing the head node"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "linked lists",
+            "hint": "Think about operations where you might need to find a specific node or the one before it.",
+            "feedback": {
+                "correct": "Correct! To insert at an arbitrary position in a singly linked list, you typically need to traverse to the node just before the insertion point.",
+                "wrong": "Incorrect. Inserting at the head, deleting the head, or accessing the head are O(1) operations. Inserting in the middle requires traversal."
+            }
+        }
+    ],
+    "algo": [
+        {
+            "id": "algo_1",
+            "text": "Which sorting algorithm has the worst-case time complexity of O(n^2)?",
+            "options": [
+                "Merge Sort",
+                "Quick Sort (typical worst-case)",
+                "Heap Sort",
+                "Radix Sort"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "easy",
+            "skill": "sorting",
+            "hint": "Some algorithms are sensitive to the initial order of elements.",
+            "feedback": {
+                "correct": "Correct! Quick Sort, in its basic implementation, can degrade to O(n^2) in the worst-case (e.g., already sorted array with naive pivot selection).",
+                "wrong": "Incorrect. Merge Sort, Heap Sort, and Radix Sort generally have better worst-case complexities (O(n log n) or O(nk))."
+            }
+        },
+        {
+            "id": "algo_2",
+            "text": "What is the time complexity of a Binary Search algorithm on a sorted array of 'n' elements?",
+            "options": [
+                "O(n)",
+                "O(log n)",
+                "O(n log n)",
+                "O(1)"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "medium",
+            "skill": "searching",
+            "hint": "Binary search repeatedly divides the search interval in half.",
+            "feedback": {
+                "correct": "Correct! Binary Search halves the search space in each step, leading to logarithmic time complexity.",
+                "wrong": "Incorrect. Linear search is O(n); binary search is much faster at O(log n)."
+            }
+        },
+        {
+            "id": "algo_3",
+            "text": "Dynamic Programming is typically used for problems with which two key properties?",
+            "options": [
+                "Greedy choice property and optimal substructure",
+                "Overlapping subproblems and greedy choice property",
+                "Optimal substructure and overlapping subproblems",
+                "Divide and conquer and quick runtime"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "dynamic programming",
+            "hint": "DP aims to solve complex problems by breaking them into smaller, reusable parts.",
+            "feedback": {
+                "correct": "Correct! Dynamic Programming thrives on problems exhibiting optimal substructure (optimal solution to problem contains optimal solutions to subproblems) and overlapping subproblems (same subproblems are solved multiple times).",
+                "wrong": "Incorrect. While some greedy problems have optimal substructure, the key for DP is often avoiding recomputation of identical subproblems."
+            }
+        },
+        {
+            "id": "algo_4",
+            "text": "Which algorithm is used to find the shortest path from a single source vertex to all other vertices in a graph with non-negative edge weights?",
+            "options": [
+                "Bellman-Ford Algorithm",
+                "Floyd-Warshall Algorithm",
+                "Prim's Algorithm",
+                "Dijkstra's Algorithm"
+            ],
+            "correctAnswer": 3,
+            "difficulty": "medium",
+            "skill": "graph algorithms",
+            "hint": "This algorithm is a classic for single-source shortest paths.",
+            "feedback": {
+                "correct": "Correct! Dijkstra's Algorithm efficiently solves the single-source shortest path problem for graphs with non-negative edge weights.",
+                "wrong": "Incorrect. Bellman-Ford handles negative weights, Floyd-Warshall is for all-pairs shortest paths, and Prim's is for Minimum Spanning Trees."
+            }
+        },
+        {
+            "id": "algo_5",
+            "text": "A greedy algorithm always makes the choice that seems best at the moment. What is a potential drawback of this approach?",
+            "options": [
+                "It always finds the globally optimal solution.",
+                "It requires significant computational resources.",
+                "It might not always find the globally optimal solution.",
+                "It cannot be applied to optimization problems."
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "greedy algorithms",
+            "hint": "Local optimum doesn't always lead to global optimum.",
+            "feedback": {
+                "correct": "Correct! A greedy choice that is locally optimal at each step does not always lead to a globally optimal solution for the entire problem.",
+                "wrong": "Incorrect. Greedy algorithms are often computationally efficient, and while sometimes they find the optimal solution, it's not a guarantee."
+            }
+        }
+    ],
+    "db": [
+        {
+            "id": "db_1",
+            "text": "Which SQL keyword is used to retrieve data from a database?",
+            "options": [
+                "UPDATE",
+                "INSERT",
+                "SELECT",
+                "DELETE"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "SQL basics",
+            "hint": "Think about the most common command for querying information.",
+            "feedback": {
+                "correct": "Correct! The SELECT statement is used to query and retrieve data from one or more tables in a database.",
+                "wrong": "Incorrect. UPDATE, INSERT, and DELETE are used for modifying data, not retrieving it."
+            }
+        },
+        {
+            "id": "db_2",
+            "text": "What is the primary goal of database normalization?",
+            "options": [
+                "To speed up data retrieval operations",
+                "To reduce data redundancy and improve data integrity",
+                "To encrypt sensitive data in the database",
+                "To define primary and foreign keys"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "medium",
+            "skill": "database design",
+            "hint": "Consider the 'why' behind breaking down tables into smaller, related ones.",
+            "feedback": {
+                "correct": "Correct! Normalization aims to organize tables to minimize redundancy and dependencies, thereby improving data integrity and consistency.",
+                "wrong": "Incorrect. While normalization helps with data integrity, its main purpose is to reduce redundancy, not primarily speed up retrieval or encryption, though it aids in defining keys."
+            }
+        },
+        {
+            "id": "db_3",
+            "text": "Which of the ACID properties ensures that a transaction is treated as a single, indivisible unit?",
+            "options": [
+                "Atomicity",
+                "Consistency",
+                "Isolation",
+                "Durability"
+            ],
+            "correctAnswer": 0,
+            "difficulty": "medium",
+            "skill": "transactions",
+            "hint": "Think about the 'all or nothing' principle.",
+            "feedback": {
+                "correct": "Correct! Atomicity ensures that either all operations within a transaction succeed, or none of them do (the transaction is rolled back).",
+                "wrong": "Incorrect. Atomicity ensures the 'all or nothing' property of transactions."
+            }
+        },
+        {
+            "id": "db_4",
+            "text": "When would you typically use a LEFT JOIN over an INNER JOIN?",
+            "options": [
+                "When you only want matching rows from both tables.",
+                "When you want to retrieve all rows from the right table and only matching rows from the left table.",
+                "When you want to retrieve all rows from the left table and only matching rows from the right table.",
+                "When you want to combine results of two SELECT statements."
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "SQL joins",
+            "hint": "Consider which table's data you always want to keep, even if there's no match in the other.",
+            "feedback": {
+                "correct": "Correct! A LEFT JOIN returns all rows from the left table, and the matching rows from the right table. If there's no match, NULLs are returned for the right table's columns.",
+                "wrong": "Incorrect. An INNER JOIN gives only matches, a RIGHT JOIN gives all from the right, and UNION combines results."
+            }
+        },
+        {
+            "id": "db_5",
+            "text": "What is the main purpose of creating an index on a database table column?",
+            "options": [
+                "To enforce primary key constraints",
+                "To store data in an encrypted format",
+                "To improve the speed of data retrieval operations",
+                "To prevent duplicate values in the column"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "indexing",
+            "hint": "Think about how indexes in a book help you find information faster.",
+            "feedback": {
+                "correct": "Correct! Indexes are created to speed up data retrieval by allowing the database to quickly locate data without scanning the entire table.",
+                "wrong": "Incorrect. While primary keys often have indexes, the core purpose of an index is performance for retrieval, not encryption or strictly preventing duplicates (though unique indexes do)."
+            }
+        }
+    ],
+    "oop": [
+        {
+            "id": "oop_1",
+            "text": "Which OOP concept bundles data and methods that operate on the data within a single unit?",
+            "options": [
+                "Inheritance",
+                "Polymorphism",
+                "Encapsulation",
+                "Abstraction"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "encapsulation",
+            "hint": "Think about 'wrapping' or 'containing' related things together.",
+            "feedback": {
+                "correct": "Correct! Encapsulation is the mechanism of wrapping the data (variables) and code acting on the data (methods) together as a single unit.",
+                "wrong": "Incorrect. Encapsulation is about bundling data and methods, and hiding internal state."
+            }
+        },
+        {
+            "id": "oop_2",
+            "text": "What does 'Polymorphism' literally mean in Object-Oriented Programming?",
+            "options": [
+                "One object, many states",
+                "Many forms",
+                "One class, many objects",
+                "Different objects, same data"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "medium",
+            "skill": "polymorphism",
+            "hint": "Break down the Greek roots of the word.",
+            "feedback": {
+                "correct": "Correct! 'Poly' means many, and 'morph' means form. Polymorphism allows objects of different classes to be treated as objects of a common superclass.",
+                "wrong": "Incorrect. Polymorphism literally means 'many forms' and refers to the ability of an object to take on many forms."
+            }
+        },
+        {
+            "id": "oop_3",
+            "text": "In object-oriented programming, what is the process by which one object acquires the properties and behaviors of another object?",
+            "options": [
+                "Composition",
+                "Association",
+                "Inheritance",
+                "Aggregation"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "medium",
+            "skill": "inheritance",
+            "hint": "Think about parent-child relationships between classes.",
+            "feedback": {
+                "correct": "Correct! Inheritance allows a class (subclass/child class) to inherit properties and methods from another class (superclass/parent class).",
+                "wrong": "Incorrect. Inheritance specifically defines an 'is-a' relationship for acquiring traits, unlike composition or association."
+            }
+        },
+        {
+            "id": "oop_4",
+            "text": "Which OOP principle focuses on showing only essential features of an object and hiding the implementation details?",
+            "options": [
+                "Encapsulation",
+                "Polymorphism",
+                "Abstraction",
+                "Inheritance"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "abstraction",
+            "hint": "Think about simplifying complex systems by presenting a clear interface.",
+            "feedback": {
+                "correct": "Correct! Abstraction focuses on 'what' an object does rather than 'how' it does it, providing a simplified view.",
+                "wrong": "Incorrect. While related, encapsulation is about bundling and hiding, while abstraction is about defining and showing only relevant aspects."
+            }
+        },
+        {
+            "id": "oop_5",
+            "text": "What is the special method called when an object is created from a class?",
+            "options": [
+                "Destructor",
+                "Constructor",
+                "Builder",
+                "Initializer"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "easy",
+            "skill": "objects",
+            "hint": "This method prepares the object for use.",
+            "feedback": {
+                "correct": "Correct! A constructor is a special method used to initialize objects of a class when they are created.",
+                "wrong": "Incorrect. A constructor is called during object creation; a destructor is called during object destruction."
+            }
+        }
+    ],
+    "net": [
+        {
+            "id": "net_1",
+            "text": "Which layer of the OSI model is responsible for logical addressing (IP addresses)?",
+            "options": [
+                "Data Link Layer",
+                "Physical Layer",
+                "Network Layer",
+                "Transport Layer"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "OSI model",
+            "hint": "This layer handles routing decisions.",
+            "feedback": {
+                "correct": "Correct! The Network Layer is responsible for logical addressing (IP addresses) and routing of packets across networks.",
+                "wrong": "Incorrect. The Network Layer handles logical addressing; the Data Link layer handles physical addressing (MAC addresses)."
+            }
+        },
+        {
+            "id": "net_2",
+            "text": "What is the purpose of a subnet mask?",
+            "options": [
+                "To encrypt data packets",
+                "To identify the type of network protocol being used",
+                "To separate the network portion from the host portion of an IP address",
+                "To assign a unique MAC address to a device"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "medium",
+            "skill": "IP addressing",
+            "hint": "It helps determine if an IP address is on the local network or needs to be routed.",
+            "feedback": {
+                "correct": "Correct! A subnet mask is used to distinguish between the network address and the host address within an IP address.",
+                "wrong": "Incorrect. The subnet mask's primary role is to delineate network and host parts of an IP address, not encryption or MAC address assignment."
+            }
+        },
+        {
+            "id": "net_3",
+            "text": "Which protocol offers a connection-oriented service, guaranteeing delivery of data?",
+            "options": [
+                "UDP (User Datagram Protocol)",
+                "IP (Internet Protocol)",
+                "TCP (Transmission Control Protocol)",
+                "ICMP (Internet Control Message Protocol)"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "medium",
+            "skill": "transport protocols",
+            "hint": "Think about protocols that establish a handshake before sending data.",
+            "feedback": {
+                "correct": "Correct! TCP provides reliable, ordered, and error-checked delivery of a stream of octets between applications running on hosts.",
+                "wrong": "Incorrect. UDP is connectionless and does not guarantee delivery. TCP is connection-oriented and reliable."
+            }
+        },
+        {
+            "id": "net_4",
+            "text": "Which routing protocol uses a 'link-state' algorithm to build a complete topology of the network?",
+            "options": [
+                "RIP (Routing Information Protocol)",
+                "BGP (Border Gateway Protocol)",
+                "OSPF (Open Shortest Path First)",
+                "EIGRP (Enhanced Interior Gateway Routing Protocol)"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "routing protocols",
+            "hint": "This protocol is known for its efficiency and scalability in large networks.",
+            "feedback": {
+                "correct": "Correct! OSPF is a widely used interior gateway protocol that uses the link-state routing algorithm.",
+                "wrong": "Incorrect. RIP is distance-vector, BGP is path-vector, and EIGRP is an advanced distance-vector/hybrid protocol. OSPF is link-state."
+            }
+        },
+        {
+            "id": "net_5",
+            "text": "What is the primary function of the DNS (Domain Name System)?",
+            "options": [
+                "To assign IP addresses dynamically to devices",
+                "To encrypt web traffic",
+                "To translate human-readable domain names into IP addresses",
+                "To manage network hardware connections"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "DNS",
+            "hint": "Think about how your web browser finds a website when you type its name.",
+            "feedback": {
+                "correct": "Correct! DNS acts like a phonebook for the internet, translating domain names (like example.com) into IP addresses.",
+                "wrong": "Incorrect. DNS translates domain names to IP addresses. DHCP assigns IPs, and HTTPS encrypts traffic."
+            }
+        }
+    ],
+    "os": [
+        {
+            "id": "os_1",
+            "text": "What is the key difference between a process and a thread?",
+            "options": [
+                "Processes share the same memory space, threads do not.",
+                "Threads are independent programs, processes are parts of a program.",
+                "Processes have their own separate memory space, while threads within the same process share memory.",
+                "Threads are managed by the hardware, processes by the operating system."
+            ],
+            "correctAnswer": 2,
+            "difficulty": "easy",
+            "skill": "processes & threads",
+            "hint": "Consider their memory ownership.",
+            "feedback": {
+                "correct": "Correct! Processes have independent memory spaces, ensuring isolation, while threads within a process share the same memory space, facilitating communication but requiring careful synchronization.",
+                "wrong": "Incorrect. Threads within a process share memory, making them lightweight but requiring careful synchronization, while processes have separate memory spaces."
+            }
+        },
+        {
+            "id": "os_2",
+            "text": "Which of the following is NOT one of the necessary conditions for a deadlock to occur?",
+            "options": [
+                "Mutual Exclusion",
+                "No Preemption",
+                "Resource Sharing",
+                "Hold and Wait"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "medium",
+            "skill": "deadlock",
+            "hint": "Deadlock conditions are typically four; one of these is not part of the standard set.",
+            "feedback": {
+                "correct": "Correct! Resource sharing is not a condition for deadlock; rather, the way resources are held and requested (Hold and Wait) contributes. The four conditions are Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait.",
+                "wrong": "Incorrect. Resource Sharing is not a specific condition for deadlock, though the sharing of non-preemptable resources can lead to deadlock."
+            }
+        },
+        {
+            "id": "os_3",
+            "text": "What is the main benefit of using paging in memory management?",
+            "options": [
+                "To prevent external fragmentation",
+                "To allow faster CPU clock speeds",
+                "To reduce internal fragmentation",
+                "To provide direct access to disk storage"
+            ],
+            "correctAnswer": 0,
+            "difficulty": "medium",
+            "skill": "memory management",
+            "hint": "Paging divides memory into fixed-size blocks.",
+            "feedback": {
+                "correct": "Correct! Paging divides both physical and logical memory into fixed-size blocks, effectively eliminating external fragmentation by allowing non-contiguous allocation of memory.",
+                "wrong": "Incorrect. Paging eliminates external fragmentation, but can introduce internal fragmentation. It doesn't directly affect CPU speed or direct disk access."
+            }
+        },
+        {
+            "id": "os_4",
+            "text": "Which CPU scheduling algorithm gives preference to processes with the shortest estimated execution time?",
+            "options": [
+                "First-Come, First-Served (FCFS)",
+                "Round Robin (RR)",
+                "Shortest Job Next (SJN) / Shortest Job First (SJF)",
+                "Priority Scheduling"
+            ],
+            "correctAnswer": 2,
+            "difficulty": "hard",
+            "skill": "CPU scheduling",
+            "hint": "This algorithm is optimal in terms of minimizing average waiting time.",
+            "feedback": {
+                "correct": "Correct! SJN/SJF schedules processes with the smallest CPU burst first, minimizing average waiting time. It requires knowing or estimating future burst times.",
+                "wrong": "Incorrect. FCFS is simple, RR uses time slices, and Priority scheduling is based on assigned priorities. SJN specifically targets shortest jobs."
+            }
+        },
+        {
+            "id": "os_5",
+            "text": "What is 'virtual memory' primarily used for?",
+            "options": [
+                "To speed up disk I/O operations",
+                "To allow a process to use more memory than is physically available",
+                "To physically expand RAM capacity",
+                "To create encrypted disk partitions"
+            ],
+            "correctAnswer": 1,
+            "difficulty": "easy",
+            "skill": "virtual memory",
+            "hint": "It creates an illusion of a larger memory space.",
+            "feedback": {
+                "correct": "Correct! Virtual memory allows programs to address memory as if a much larger memory space is available, using secondary storage (disk) to temporarily hold parts of memory not currently in use.",
+                "wrong": "Incorrect. Virtual memory uses disk space to extend apparent RAM, allowing larger programs to run, but it doesn't physically expand RAM or primarily speed up I/O or encryption."
+            }
+        }
+    ]
+}

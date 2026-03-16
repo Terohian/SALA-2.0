@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SALA – My Subjects</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="sala.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+    <style>
+        /* ALL YOUR BEAUTIFUL CSS KEPT EXACTLY AS IS */
+        .subject-header { background: linear-gradient(135deg, var(--navy), var(--navy-mid)); color: white; padding: 32px; border-radius: 20px; margin-bottom: 32px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 21, 53, 0.15); }
+        .subject-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        }
+        .subject-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        transition: background .15s;
+        }
+        .subject-row:last-child { border-bottom: none; }
+        .subject-row:hover { background: var(--surface); }
+        .subj-icon-wrap {
+        width: 40px; height: 40px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+        }
+        .subj-info { flex: 1; min-width: 0; }
+        .subj-name {
+        font-size: 14px; font-weight: 700; color: var(--navy);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .subj-meta-row {
+        display: flex; align-items: center; gap: 10px; margin-top: 3px;
+        }
+        .subj-code {
+        font-size: 11px; font-weight: 700; color: var(--muted);
+        background: var(--surface2); padding: 2px 7px;
+        border-radius: 4px;
+        }
+        .subj-progress-wrap {
+        width: 120px; flex-shrink: 0;
+        }
+        .subj-progress-bar {
+        height: 5px; background: var(--surface2);
+        border-radius: 99px; overflow: hidden; margin-bottom: 3px;
+        }
+        .subj-progress-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+        .subj-progress-pct {
+        font-size: 11px; font-weight: 700; text-align: right;
+        }
+        .subj-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .progress-container { margin-top: auto; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+        .progress-bar { height: 8px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+        .card-actions { display: flex; gap: 10px; margin-top: 20px; }
+        
+        /* Modal Styles */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 21, 53, 0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease-out; }
+        .modal-box { background: var(--card); width: 90%; max-width: 500px; max-height: 85vh; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: slideUp 0.3s ease-out; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--navy); }
+        .modal-close { background: var(--surface2); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text2); transition: 0.2s; }
+        .modal-close:hover { background: rgba(255, 77, 109, 0.1); color: var(--red); }
+        .resource-list { padding: 20px; overflow-y: auto; }
+        .resource-item { display: flex; align-items: center; gap: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; transition: 0.2s; cursor: pointer; }
+        .resource-item:hover { border-color: var(--blue); background: var(--surface); }
+        .resource-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(61, 90, 254, 0.1); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .upload-btn { background: rgba(61, 90, 254, 0.1); color: var(--blue); border: 1px dashed var(--blue); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .upload-btn:hover { background: rgba(61, 90, 254, 0.2); }
+        #fileUploadInput { display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon">🎓</div>
+        <div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div>
+    </div>
+    <div class="sidebar-user">
+        <div class="user-ava" id="userAva">?</div>
+         <div class="user-info"><strong id="userName">Loading...</strong><span id="userRole">Student</span></div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Main Menu</div>
+        <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+        <div class="nav-item active"><span class="nav-icon">📚</span><span>Course Catalog</span></div>
+        <div class="nav-item" onclick="location.href='quiz.html'"><span class="nav-icon">🧠</span><span>Take a Quiz</span></div>
+        <div class="nav-item" onclick="location.href='recommendations.html'"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
+        <div class="nav-item" onclick="nav('qa.html')"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
+        <div class="nav-item" onclick="location.href='analytics.html'"><span class="nav-icon">📈</span><span>Analytics</span></div>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="logout-btn" onclick="location.href='login.html'"><span>🚪</span><span>Logout</span></button>
+    </div>
+</div>
+
+<div class="topbar">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <span class="topbar-title">Course Catalog</span>
+    <div class="topbar-spacer"></div>
+      <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode"><i class="fa-solid fa-moon" id="darkToggleIcon"></i></button>
+  <button class="topbar-icon-btn">🔔</button>
+</div>
+
+<div class="main-wrap">
+    <div class="page-body">
+        <div class="subject-header">
+            <h1 style="font-family: var(--font-display); font-size: 24px; font-weight: 800; margin-bottom: 8px;">Enrolled Units</h1>
+            <p style="opacity: 0.9; max-width: 600px; font-size: 14px;">
+                Enroll in new modules or track your mastery for the current academic session.
+            </p>
+        </div>
+
+        <div class="subject-grid" id="subjectGrid">
+            <p>Loading your profile...</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="resourceModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title">
+                <h3 id="modalSubjectTitle">Subject Resources</h3>
+                <p id="modalSubjectCode" style="font-size: 12px; color: var(--muted); margin-top: 2px;">ICS 000</p>
+            </div>
+            <div style="display:flex; gap: 12px; align-items: center;">
+                <input type="file" id="fileUploadInput" onchange="handleFileUpload(event)">
+                <button class="upload-btn" onclick="document.getElementById('fileUploadInput').click()">
+                    <span>📁</span> Upload
+                </button>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+        </div>
+        <div class="resource-list" id="resourceList"></div>
+    </div>
+</div>
+
+<script>
+  let currentOpenSubjectId = null;
+  let currentPageSubjects = []; // replaces subjectsData — holds the student's actual level subjects
+
+  document.addEventListener('DOMContentLoaded', () => {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        loadLiveSubjects(user.uid);
+      } else {
+        document.getElementById('subjectGrid').innerHTML =
+          '<p style="color:var(--red)">You must be logged in to view your subjects.</p>';
+      }
+    });
+  });
+
+  async function loadLiveSubjects(uid) {
+    const grid = document.getElementById('subjectGrid');
+
+    try {
+      const db = firebase.firestore();
+      const doc = await db.collection('users').doc(uid).get();
+
+      if (!doc.exists) {
+        grid.innerHTML = '<p>Error: User profile not found.</p>';
+        return;
+      }
+
+      // ✅ Declare userData FIRST before using any of its properties
+      const userData = doc.data();
+      const enrolledSubjects = userData.enrolledSubjects || [];
+      const userProgramme = userData.programme || 'cs';
+      const userLevel = userData.level || 'y1s1';
+
+      // ✅ Use PROGRAMME_CATALOG helpers — no more hardcoded array
+      const subjects = window.getProgrammeSubjects(userProgramme, userLevel);
+      const levelLabel = window.getLevelLabel(userProgramme, userLevel);
+      const progLabel  = window.getProgrammeLabel(userProgramme);
+
+      // Update header to show the student's actual programme and level
+      document.querySelector('.subject-header h1').textContent = `${levelLabel} Units`;
+      document.querySelector('.subject-header p').textContent  = progLabel;
+
+      if (!subjects.length) {
+        grid.innerHTML = '<p style="color:var(--muted)">No subjects found for your programme and level.</p>';
+        return;
+      }
+
+      // ✅ Store in module-level variable so openModal() can use it
+      currentPageSubjects = subjects;
+
+      // Sort: enrolled first, unenrolled second — both within the student's level only
+      const sortedSubjects = [...subjects].sort((a, b) => {
+        const aE = enrolledSubjects.includes(a.id);
+        const bE = enrolledSubjects.includes(b.id);
+        if (aE && !bE) return -1;
+        if (!aE && bE) return 1;
+        return 0;
+      });
+
+      grid.innerHTML = subjects.map((s) => {
+        const isEnrolled = enrolledSubjects.includes(s.id);
+
+        let progress = 0;
+        if (isEnrolled) {
+            const bkt = userData.bkt_profile || {};
+            const relevant = Object.entries(bkt)
+            .filter(([k]) => k.startsWith(s.id))
+            .map(([, v]) => v);
+            progress = relevant.length
+            ? Math.round(relevant.reduce((a, b) => a + b, 0) / relevant.length * 100)
+            : 10;
+        }
+
+        const color = isEnrolled
+            ? (progress < 40 ? 'var(--red)' : progress < 70 ? 'var(--amber)' : 'var(--teal)')
+            : 'var(--muted)';
+
+        const statusBadge = isEnrolled
+            ? `<span style="font-size:11px;font-weight:700;color:${color};
+                background:${color}18;padding:2px 8px;border-radius:4px">
+                Enrolled
+            </span>`
+            : `<span style="font-size:11px;font-weight:700;color:var(--muted);
+                background:var(--surface2);padding:2px 8px;border-radius:4px">
+                Not Enrolled
+            </span>`;
+
+        const actions = isEnrolled
+            ? `<button class="btn btn-sm btn-secondary"
+                    onclick="openModal('${s.id}','${s.name}','${s.code}')">
+                📂 Resources
+            </button>
+            <button class="btn btn-sm"
+                    style="background:${color}18;color:${color};border:1px solid ${color}30"
+                    onclick="window.location.href='quiz.html?subject=${s.id}'">
+                ▶ Practice
+            </button>`
+            : `<button class="btn btn-sm btn-primary"
+                    onclick="enrollStudent('${uid}','${s.id}')">
+                + Enroll
+            </button>`;
+              `<button class="btn btn-sm btn-secondary" 
+                style="flex:1" 
+                onclick="window.location.href='qa.html?subject=${s.id}'">
+                💬 Ask
+              </button>`
+
+        return `
+            <div class="subject-row">
+            <div class="subj-icon-wrap" style="background:${color}18">${s.icon}</div>
+            <div class="subj-info">
+                <div class="subj-name">${s.name}</div>
+                <div class="subj-meta-row">
+                <span class="subj-code">${s.code}</span>
+                ${statusBadge}
+                </div>
+            </div>
+            ${isEnrolled ? `
+                <div class="subj-progress-wrap">
+                <div class="subj-progress-bar">
+                    <div class="subj-progress-fill"
+                        style="width:${progress}%;background:${color}"></div>
+                </div>
+                <div class="subj-progress-pct" style="color:${color}">${progress}% mastery</div>
+                </div>` : '<div style="width:120px"></div>'}
+            <div class="subj-actions">${actions}</div>
+            </div>`;
+        }).join('');
+
+    } catch (error) {
+      console.error('Error loading subjects:', error);
+      grid.innerHTML = '<p style="color:red">Failed to load subjects. Check console.</p>';
+    }
+  }
+
+  async function enrollStudent(uid, subjectId) {
+    try {
+      await firebase.firestore().collection('users').doc(uid).update({
+        enrolledSubjects: firebase.firestore.FieldValue.arrayUnion(subjectId)
+      });
+      loadLiveSubjects(uid);
+    } catch (error) {
+      console.error('Enrollment failed:', error);
+      alert('Failed to enroll. Please check your connection.');
+    }
+  }
+
+  // ✅ openModal now takes id/name/code directly — no more fragile index lookup
+  async function openModal(subjectId, subjectName, subjectCode) {
+    currentOpenSubjectId = subjectId;
+    document.getElementById('modalSubjectTitle').innerText = subjectName;
+    document.getElementById('modalSubjectCode').innerText  = subjectCode;
+
+    const list = document.getElementById('resourceList');
+    list.innerHTML = '<p style="text-align:center;color:var(--muted);padding:20px">Loading resources...</p>';
+    document.getElementById('resourceModal').classList.add('open');
+
+    try {
+      // ✅ Fetch from Firestore resources collection (what admin uploads in admin.html)
+      const db = firebase.firestore();
+      const snapshot = await db.collection('resources')
+        .where('subject', '==', subjectId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      const firestoreResources = [];
+      snapshot.forEach(doc => firestoreResources.push({ ...doc.data(), _src: 'cloud' }));
+
+      if (firestoreResources.length === 0) {
+        list.innerHTML = `
+          <p style="text-align:center;color:var(--muted);padding:20px">
+            No resources uploaded yet for this unit.<br>
+            <span style="font-size:12px">Ask your lecturer to upload materials in the Admin Portal.</span>
+          </p>`;
+        return;
+      }
+
+      list.innerHTML = firestoreResources.map(r => {
+        const isVideo = r.url?.includes('youtube') || r.url?.includes('youtu.be') || r.url?.includes('vimeo');
+        const isPdf   = r.url?.toLowerCase().endsWith('.pdf');
+        const icon    = isVideo ? '🎥' : isPdf ? '📄' : '🔗';
+        const typeLabel = isVideo ? 'Video' : isPdf ? 'PDF' : 'Link';
+
+        return `
+        <div class="resource-item" onclick="window.open('${r.url}','_blank')">
+          <div class="resource-icon">${icon}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px;color:var(--navy)">${r.title}</div>
+            <div style="font-size:12px;color:var(--muted)">
+              ${typeLabel}
+              ${r.skill ? `· <span style="color:var(--teal);font-weight:600">${r.skill}</span>` : ''}
+            </div>
+          </div>
+          <div style="font-size:16px;color:var(--blue);opacity:0.8">↗</div>
+        </div>`;
+      }).join('');
+
+    } catch (error) {
+      console.error('Failed to load resources:', error);
+      list.innerHTML = '<p style="text-align:center;color:var(--red);padding:20px">Failed to load resources.</p>';
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('resourceModal').classList.remove('open');
+  }
+
+  window.onclick = function(e) {
+    if (e.target === document.getElementById('resourceModal')) closeModal();
+  }
+</script>
+</body>
+</html>

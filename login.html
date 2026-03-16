@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="stylesheet" href="sala.css"/>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<style>
+:root {
+  --navy:#080c21;--navy-mid:#1a2050;--blue:#3d5afe;--blue-soft:#5c78ff;
+  --teal:#00bfa6;--teal-soft:#1adec8;--purple:#7c4dff;--red:#ff4d6d;
+  --amber:#ffb703;--green:#06d6a0;
+  --surface:#f5f7ff;--card:#fff;--border:#e4e8f7;--muted:#8892b0;
+  --text:#060b24;--text2:#3d4577;
+  --font-d:'Sora',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font-b);-webkit-font-smoothing:antialiased}
+body{display:flex;background:var(--navy)}
+
+/* LEFT PANEL */
+.left-panel{
+  flex:1;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 48px;
+  background:linear-gradient(145deg,#0d1240 0%,#1a2050 50%,#0d2a3a 100%);
+}
+.left-panel::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 20%,rgba(61,90,254,.25) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 60% at 80% 80%,rgba(0,191,166,.15) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 40% at 60% 10%,rgba(124,77,255,.12) 0%,transparent 50%);
+}
+.grid-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.left-content{position:relative;z-index:1;max-width:440px;width:100%}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:48px}
+.brand-icon{
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  box-shadow:0 8px 32px rgba(61,90,254,.45);
+}
+.brand-name{font-family:var(--font-d);font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.brand-tagline{font-size:12px;color:rgba(255,255,255,.4);margin-top:2px}
+.hero-text h1{
+  font-family:var(--font-d);font-size:36px;font-weight:800;color:#fff;
+  line-height:1.15;letter-spacing:-.8px;margin-bottom:16px;
+}
+.hero-text h1 span{
+  background:linear-gradient(90deg,var(--teal),var(--blue-soft));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-text p{font-size:14.5px;color:rgba(255,255,255,.5);line-height:1.7;max-width:380px;margin-bottom:36px}
+.feature-list{display:flex;flex-direction:column;gap:14px}
+.feature-item{display:flex;align-items:flex-start;gap:14px}
+.feature-icon{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+}
+.feature-text strong{display:block;font-size:13.5px;font-weight:600;color:#fff;margin-bottom:2px}
+.feature-text span{font-size:12.5px;color:rgba(255,255,255,.45);line-height:1.5}
+.stats-row{
+  display:flex;gap:24px;margin-top:44px;padding-top:28px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.stat-item{text-align:center}
+.stat-item strong{display:block;font-family:var(--font-d);font-size:22px;font-weight:800;color:#fff}
+.stat-item span{font-size:11.5px;color:rgba(255,255,255,.4)}
+
+/* RIGHT PANEL */
+.right-panel{
+  width:500px;flex-shrink:0;background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;overflow-y:auto;
+}
+.form-box{width:100%;max-width:400px}
+
+/* STEP INDICATOR */
+.step-track{display:flex;align-items:center;gap:0;margin-bottom:8px}
+.s-dot{
+  width:30px;height:30px;border-radius:50%;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:all .3s;border:2px solid transparent;
+}
+.s-dot.active {background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 0 0 4px rgba(61,90,254,.15)}
+.s-dot.done   {background:var(--green);color:#fff;border-color:var(--green)}
+.s-dot.pending{background:transparent;color:var(--muted);border-color:var(--border)}
+.s-line{flex:1;height:2px;background:var(--border);border-radius:99px;margin:0 6px;transition:background .3s}
+.s-line.done{background:var(--green)}
+.step-labels{display:flex;justify-content:space-between;margin-bottom:22px}
+.step-labels span{font-size:11.5px;color:var(--muted)}
+
+/* STEP PANELS */
+.step-panel{display:none}
+.step-panel.active{display:block;animation:stepIn .32s cubic-bezier(.4,0,.2,1) both}
+.step-panel.back  {animation:stepBack .32s cubic-bezier(.4,0,.2,1) both}
+@keyframes stepIn  {from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none}}
+@keyframes stepBack{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+
+.panel-title{font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.panel-sub{font-size:13.5px;color:var(--muted);margin-bottom:24px;line-height:1.55}
+
+/* ROLE GRID */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.role-card{
+  padding:18px 12px;border:2px solid var(--border);border-radius:14px;
+  cursor:pointer;text-align:center;transition:all .2s;background:var(--card);
+  position:relative;
+}
+.role-card:hover{border-color:rgba(61,90,254,.35);transform:translateY(-2px);box-shadow:0 6px 20px rgba(61,90,254,.1)}
+.role-card.selected{border-color:var(--blue);background:rgba(61,90,254,.04);box-shadow:0 0 0 3px rgba(61,90,254,.1)}
+.role-card.is-admin:hover{border-color:rgba(255,77,109,.45);box-shadow:0 6px 20px rgba(255,77,109,.1)}
+.role-card.is-admin.selected{border-color:var(--red);background:rgba(255,77,109,.04);box-shadow:0 0 0 3px rgba(255,77,109,.1)}
+.role-card.is-lecturer.selected{border-color:var(--teal);background:rgba(0,191,166,.04);box-shadow:0 0 0 3px rgba(0,191,166,.1)}
+.r-check{
+  position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+  background:var(--blue);color:#fff;font-size:9px;
+  align-items:center;justify-content:center;display:none;
+}
+.role-card.selected .r-check{display:flex}
+.role-card.is-admin.selected .r-check{background:var(--red)}
+.role-card.is-lecturer.selected .r-check{background:var(--teal)}
+.r-emoji{font-size:28px;margin-bottom:8px;display:block}
+.r-name{font-size:13px;font-weight:700;color:var(--text2);display:block;margin-bottom:3px}
+.r-desc{font-size:11px;color:var(--muted);line-height:1.4;display:block}
+.role-card.selected .r-name{color:var(--blue)}
+.role-card.is-admin.selected .r-name{color:var(--red)}
+.role-card.is-lecturer.selected .r-name{color:var(--teal)}
+
+.next-btn{
+  width:100%;padding:13px;margin-top:14px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-soft));
+  color:#fff;border:none;border-radius:10px;
+  font-size:14.5px;font-weight:700;font-family:var(--font-b);
+  cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 18px rgba(61,90,254,.3);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.next-btn:hover{transform:translateY(-1px);box-shadow:0 6px 26px rgba(61,90,254,.45)}
+.next-btn.teal-style{background:linear-gradient(135deg,var(--teal),var(--teal-soft));box-shadow:0 4px 18px rgba(0,191,166,.3)}
+.next-btn.teal-style:hover{box-shadow:0 6px 26px rgba(0,191,166,.45)}
+.next-btn.red-style{background:linear-gradient(135deg,var(--red),#ff7a93);box-shadow:0 4px 18px rgba(255,77,109,.3)}
+.next-btn.red-style:hover{box-shadow:0 6px 26px rgba(255,77,109,.45)}
+
+/* STEP 2 */
+.back-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:none;border:none;cursor:pointer;
+  font-size:13px;color:var(--muted);font-family:var(--font-b);
+  padding:0;margin-bottom:18px;transition:color .15s;
+}
+.back-btn:hover{color:var(--navy)}
+
+.role-banner{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:10px;margin-bottom:18px;
+  border:1.5px solid;
+}
+.role-banner.student-banner{background:rgba(61,90,254,.05);border-color:rgba(61,90,254,.2)}
+.role-banner.lecturer-banner{background:rgba(0,191,166,.05);border-color:rgba(0,191,166,.2)}
+.role-banner.admin-banner{background:rgba(255,77,109,.05);border-color:rgba(255,77,109,.2)}
+.rb-icon{font-size:22px}
+.rb-label{font-size:13px;font-weight:700;color:var(--navy);display:block}
+.rb-desc{font-size:11.5px;color:var(--muted)}
+.rb-change{
+  margin-left:auto;font-size:12px;font-weight:600;
+  background:none;border:none;cursor:pointer;font-family:var(--font-b);
+  padding:4px 8px;border-radius:6px;transition:background .15s;
+}
+.student-banner .rb-change{color:var(--blue)}
+.lecturer-banner .rb-change{color:var(--teal)}
+.admin-banner .rb-change{color:var(--red)}
+
+.security-note{
+  display:flex;align-items:flex-start;gap:9px;
+  background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.18);
+  border-radius:8px;padding:10px 12px;margin-bottom:16px;
+  font-size:12px;color:#cc3355;line-height:1.55;
+}
+
+.error-banner{
+  display:none;align-items:center;gap:10px;
+  background:rgba(255,77,109,.07);border:1.5px solid rgba(255,77,109,.22);
+  border-radius:10px;padding:12px 14px;margin-bottom:14px;
+  font-size:13px;color:var(--red);
+}
+.error-banner.show{display:flex}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.form-group{margin-bottom:15px}
+.form-label{display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.input-wrap{position:relative}
+.i-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none}
+.form-input{
+  width:100%;padding:11px 14px 11px 40px;
+  border:1.5px solid var(--border);border-radius:10px;
+  background:var(--card);font-size:14px;font-family:var(--font-b);color:var(--navy);
+  transition:border .18s,box-shadow .18s;
+}
+.form-input:focus{outline:none}
+.form-input.blue-focus:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(61,90,254,.1)}
+.form-input.teal-focus:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,191,166,.1)}
+.form-input.red-focus:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,77,109,.1)}
+.form-input::placeholder{color:var(--muted)}
+.pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px;
+}
+.pw-toggle:hover{color:var(--navy)}
+
+.form-opts{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.check-label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer}
+.check-label input{accent-color:var(--blue);width:15px;height:15px}
+.forgot-btn{font-size:13px;font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--font-b)}
+
+.btn-login{
+  width:100%;padding:13px;border:none;border-radius:10px;
+  font-size:14.5px;font-weight:700;font-family:var(--font-b);
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-login:hover{transform:translateY(-1px)}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--blue-soft));color:#fff;box-shadow:0 4px 18px rgba(61,90,254,.35)}
+.btn-blue:hover{box-shadow:0 6px 26px rgba(61,90,254,.5)}
+.btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal-soft));color:#fff;box-shadow:0 4px 18px rgba(0,191,166,.3)}
+.btn-teal:hover{box-shadow:0 6px 26px rgba(0,191,166,.45)}
+.btn-red{background:linear-gradient(135deg,var(--red),#ff7a93);color:#fff;box-shadow:0 4px 18px rgba(255,77,109,.35)}
+.btn-red:hover{box-shadow:0 6px 26px rgba(255,77,109,.5)}
+
+.form-footer{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
+.form-footer a{color:var(--blue);font-weight:600}
+.form-footer a:hover{text-decoration:underline}
+
+@media(max-width:900px){.left-panel{display:none}.right-panel{width:100%;padding:32px 20px}}
+@media(max-width:480px){.role-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="grid-overlay"></div>
+  <div class="left-content">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <div>
+        <div class="brand-name">SALA</div>
+        <div class="brand-tagline">Smart Adaptive Learning Assistant</div>
+      </div>
+    </div>
+    <div class="hero-text">
+      <h1>Learn Smarter,<br/><span>Not Harder.</span></h1>
+      <p>SALA uses AI-powered adaptive learning to personalise your study path, track mastery, and help you succeed across every subject and programme.</p>
+    </div>
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-text">
+          <strong>Adaptive AI Quizzes</strong>
+          <span>Questions adjust to your skill level in real time using IRT &amp; BKT models</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">💬</div>
+        <div class="feature-text">
+          <strong>Instant AI Answers</strong>
+          <span>Ask anything — SALA AI answers on any topic, any course, any time</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📈</div>
+        <div class="feature-text">
+          <strong>Progress Analytics</strong>
+          <span>Track mastery across subjects and get personalised study recommendations</span>
+        </div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item"><strong>4</strong><span>Programmes</span></div>
+      <div class="stat-item"><strong>40+</strong><span>Subjects</span></div>
+      <div class="stat-item"><strong>800+</strong><span>Questions</span></div>
+      <div class="stat-item"><strong>5</strong><span>AI Models</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+<div class="form-box">
+
+  <!-- Step indicator -->
+  <div class="step-track">
+    <div class="s-dot active" id="dot1">1</div>
+    <div class="s-line" id="line1"></div>
+    <div class="s-dot pending" id="dot2">2</div>
+  </div>
+  <div class="step-labels">
+    <span>Select role</span>
+    <span>Sign in</span>
+  </div>
+
+  <!-- ══ STEP 1: ROLE SELECTOR ══ -->
+  <div class="step-panel active" id="step1">
+    <div class="panel-title">Welcome to SALA 👋</div>
+    <div class="panel-sub">Select your role to continue.</div>
+
+    <div class="role-grid">
+      <div class="role-card selected" data-role="student" onclick="selectRole(this)">
+        <div class="r-check"><i class="fa-solid fa-check"></i></div>
+        <span class="r-emoji">🎓</span>
+        <span class="r-name">Student</span>
+      </div>
+      <div class="role-card is-lecturer" data-role="lecturer" onclick="selectRole(this)">
+        <div class="r-check"><i class="fa-solid fa-check"></i></div>
+        <span class="r-emoji">👨‍🏫</span>
+        <span class="r-name">Lecturer</span>
+      </div>
+      <div class="role-card is-admin" data-role="admin" onclick="selectRole(this)">
+        <div class="r-check"><i class="fa-solid fa-check"></i></div>
+        <span class="r-emoji">🛡️</span>
+        <span class="r-name">Super Admin</span>
+      </div>
+    </div>
+
+    <button class="next-btn" id="nextBtn" onclick="goStep2()">
+      Continue <i class="fa-solid fa-arrow-right"></i>
+    </button>
+
+    <div class="form-footer" style="margin-top:14px">
+      Don't have an account? <a href="register.html">Create one</a>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: CREDENTIALS ══ -->
+  <div class="step-panel" id="step2">
+
+    <button class="back-btn" onclick="goStep1()">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </button>
+
+    <!-- Role banner -->
+    <div class="role-banner student-banner" id="roleBanner">
+      <span class="rb-icon" id="rbIcon">🎓</span>
+      <div>
+        <span class="rb-label" id="rbLabel">Student</span>
+        <span class="rb-desc"  id="rbDesc">Signing into your student account</span>
+      </div>
+      <button class="rb-change" onclick="goStep1()">Change</button>
+    </div>
+
+    <!-- Security note (admin only) -->
+    <div class="security-note" id="secNote" style="display:none">
+      <i class="fa-solid fa-shield-halved" style="flex-shrink:0;margin-top:1px"></i>
+      <span>You are accessing a <strong>restricted area</strong>. All super admin sessions are monitored. Unauthorised access is prohibited.</span>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="errBanner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span id="errMsg">Incorrect credentials. Please try again.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="input-wrap">
+        <i class="i-icon fa-regular fa-envelope"></i>
+        <input class="form-input blue-focus" type="email" id="emailInput"
+          placeholder="your@email.com" autocomplete="email"
+          onkeydown="if(event.key==='Enter')document.getElementById('passInput').focus()"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <i class="i-icon fa-solid fa-lock"></i>
+        <input class="form-input blue-focus" type="password" id="passInput"
+          placeholder="Enter your password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="pw-toggle" onclick="togglePass()" id="pwBtn" title="Show/hide password">
+          <i class="fa-regular fa-eye-slash"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-opts">
+      <label class="check-label"><input type="checkbox" id="rememberMe" checked/> Remember me</label>
+      <button class="forgot-btn" id="forgotBtn" style="color:var(--blue)" onclick="handleForgot()">Forgot password?</button>
+    </div>
+
+    <button class="btn-login btn-blue" id="loginBtn" onclick="doLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i>
+      <span id="loginBtnText">Sign In</span>
+    </button>
+
+    <div class="form-footer">
+      Don't have an account? <a href="register.html">Create one</a>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<!-- Toast -->
+<div id="toastEl" style="
+  position:fixed;bottom:24px;right:24px;background:#0f1535;color:#fff;
+  padding:13px 18px;border-radius:12px;font-size:13.5px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;
+  transition:all .35s cubic-bezier(.34,1.56,.64,1);z-index:9999;max-width:320px;
+  display:flex;align-items:center;gap:10px"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SALA — Two-step role-aware login
+// ═══════════════════════════════════════════════════════
+
+let selectedRole = 'student';
+let pwVisible    = false;
+
+const ROLE_META = {
+  student:  { icon:'🎓', label:'Student',     desc:'Signing into your student account',          dest:'dashboard.html',   bannerCls:'student-banner',  btnCls:'btn-blue', focusCls:'blue-focus', accentColor:'var(--blue)' },
+  lecturer: { icon:'👨‍🏫', label:'Lecturer',    desc:'Signing into the Lecturer Portal',           dest:'admin.html',       bannerCls:'lecturer-banner', btnCls:'btn-teal', focusCls:'teal-focus', accentColor:'var(--teal)' },
+  admin:    { icon:'🛡️', label:'Super Admin', desc:'Restricted — authorised personnel only',      dest:'superadmin.html',  bannerCls:'admin-banner',    btnCls:'btn-red',  focusCls:'red-focus',  accentColor:'var(--red)'  },
+};
+
+// ── STEP 1 ──────────────────────────────────────────────
+function selectRole(card) {
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedRole = card.dataset.role;
+
+  const meta = ROLE_META[selectedRole];
+  const nb   = document.getElementById('nextBtn');
+  nb.className = 'next-btn ' + (selectedRole==='admin'?'red-style':selectedRole==='lecturer'?'teal-style':'');
+  nb.innerHTML = `Continue as ${meta.label} <i class="fa-solid fa-arrow-right"></i>`;
+}
+
+function goStep2() {
+  const meta = ROLE_META[selectedRole];
+
+  // Update step dots
+  const d1 = document.getElementById('dot1');
+  d1.className = 's-dot done';
+  d1.innerHTML = '<i class="fa-solid fa-check" style="font-size:10px"></i>';
+  document.getElementById('line1').classList.add('done');
+  document.getElementById('dot2').className = 's-dot active';
+
+  // Update role banner
+  document.getElementById('roleBanner').className = 'role-banner ' + meta.bannerCls;
+  document.getElementById('rbIcon').textContent   = meta.icon;
+  document.getElementById('rbLabel').textContent  = meta.label;
+  document.getElementById('rbDesc').textContent   = meta.desc;
+
+  // Security note for admin
+  document.getElementById('secNote').style.display = selectedRole === 'admin' ? 'flex' : 'none';
+
+  // Style inputs & button for this role
+  document.querySelectorAll('.form-input').forEach(el => {
+    el.className = 'form-input ' + meta.focusCls;
+  });
+  const lb = document.getElementById('loginBtn');
+  lb.className  = 'btn-login ' + meta.btnCls;
+  document.getElementById('forgotBtn').style.color = meta.accentColor;
+
+  // Transition panels
+  document.getElementById('step1').classList.remove('active');
+  const s2 = document.getElementById('step2');
+  s2.classList.remove('back');
+  void s2.offsetWidth;
+  s2.classList.add('active');
+  document.getElementById('errBanner').classList.remove('show');
+  setTimeout(() => document.getElementById('emailInput').focus(), 300);
+}
+
+function goStep1() {
+  const d1 = document.getElementById('dot1');
+  d1.className = 's-dot active';
+  d1.textContent = '1';
+  document.getElementById('line1').classList.remove('done');
+  document.getElementById('dot2').className = 's-dot pending';
+  document.getElementById('dot2').textContent = '2';
+
+  document.getElementById('step2').classList.remove('active');
+  const s1 = document.getElementById('step1');
+  s1.classList.remove('active','back');
+  void s1.offsetWidth;
+  s1.classList.add('active','back');
+  document.getElementById('errBanner').classList.remove('show');
+  document.getElementById('passInput').value = '';
+}
+
+// ── STEP 2 ──────────────────────────────────────────────
+function togglePass() {
+  pwVisible = !pwVisible;
+  document.getElementById('passInput').type = pwVisible ? 'text' : 'password';
+  document.getElementById('pwBtn').innerHTML = pwVisible
+    ? '<i class="fa-regular fa-eye"></i>'
+    : '<i class="fa-regular fa-eye-slash"></i>';
+}
+
+let _busy = false;
+
+async function doLogin() {
+  if (_busy) return;
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passInput').value;
+  document.getElementById('errBanner').classList.remove('show');
+
+  if (!email)  { showErr('Please enter your email address.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Invalid email format.'); return; }
+  if (!pass)   { showErr('Please enter your password.'); return; }
+  if (pass.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+
+  _busy = true;
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Signing in…</span>';
+  btn.disabled  = true;
+
+  try {
+    // 1. Firebase Auth
+    const cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+    const uid  = cred.user.uid;
+
+    // 2. Fetch Firestore role
+    const snap   = await firebase.firestore().collection('users').doc(uid).get();
+    const dbRole = snap.exists ? snap.data().role : null;
+    const name   = snap.exists ? (snap.data().name || 'User') : 'User';
+
+    // 3. Role guard — selected card must match Firestore role
+    const match = {student:'student', lecturer:'lecturer', admin:'admin'};
+    if (!dbRole || dbRole !== match[selectedRole]) {
+      // Show error first, then sign out to avoid race with onAuthStateChanged
+      const picked = ROLE_META[selectedRole]?.label || selectedRole;
+      showErr(`This account is not registered as a ${picked}. Please select the correct role.`);
+      _busy = false; resetBtn();
+      // Sign out after error is shown — no redirect needed, user stays on login page
+      setTimeout(() => firebase.auth().signOut(), 300);
+      return;
+    }
+
+    // 4. Success — redirect using the Firestore role (not selectedRole) as source of truth
+    showToast(`Welcome back, ${name.split(' ')[0]}! 👋`, 'success');
+    const roleDestMap = {student:'dashboard.html', lecturer:'admin.html', admin:'superadmin.html'};
+    const dest = roleDestMap[dbRole] || 'dashboard.html';
+    setTimeout(() => window.location.href = dest, 900);
+
+  } catch(err) {
+    console.error(err);
+    _busy = false; resetBtn();
+    const c = err.code || '';
+    if (c.includes('user-not-found')||c.includes('wrong-password')||c.includes('invalid-credential'))
+      showErr('Incorrect email or password. Please try again.');
+    else if (c.includes('too-many-requests'))
+      showErr('Too many failed attempts. Please wait and try again.');
+    else if (c.includes('network'))
+      showErr('Network error. Check your connection.');
+    else
+      showErr('Sign-in failed. Please check your credentials.');
+
+    shake();
+  }
+}
+
+function resetBtn() {
+  const btn = document.getElementById('loginBtn');
+  btn.className = 'btn-login ' + (ROLE_META[selectedRole]?.btnCls || 'btn-blue');
+  btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Sign In</span>';
+  btn.disabled  = false;
+}
+
+async function handleForgot() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showErr('Enter your email address above first, then click Forgot password.');
+    document.getElementById('emailInput').focus(); return;
+  }
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    showToast(`Password reset link sent to ${email}`, 'success');
+  } catch(e) { showErr('Could not send reset email. Check the address and try again.'); }
+}
+
+// ── Helpers ─────────────────────────────────────────────
+function showErr(msg) {
+  const b = document.getElementById('errBanner');
+  document.getElementById('errMsg').textContent = msg;
+  b.classList.add('show');
+}
+
+function shake() {
+  const b = document.getElementById('errBanner');
+  b.style.animation = 'none';
+  void b.offsetHeight;
+  b.style.animation = 'shake .4s ease';
+}
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toastEl');
+  const bg = {success:'#06d6a0', error:'#ff4d6d', info:'#0f1535'};
+  t.style.background = bg[type]||bg.info;
+  t.innerHTML = `<i class="fa-solid fa-${type==='success'?'circle-check':'circle-info'}"></i> ${msg}`;
+  t.style.transform='translateY(0)'; t.style.opacity='1';
+  setTimeout(()=>{t.style.transform='translateY(80px)';t.style.opacity='0';},3200);
+}
+
+// ── Auto-redirect already-logged-in users ────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const wait = setInterval(() => {
+    if (typeof firebase !== 'undefined' && firebase.apps.length) {
+      clearInterval(wait);
+      firebase.auth().onAuthStateChanged(async user => {
+        if (!user) return;
+        try {
+          const snap = await firebase.firestore().collection('users').doc(user.uid).get();
+          const role = snap.exists ? snap.data().role : null;
+          const map  = {student:'dashboard.html', lecturer:'admin.html', admin:'superadmin.html'};
+          if (map[role]) window.location.href = map[role];
+        } catch(e) {}
+      });
+    }
+  }, 80);
+  setTimeout(()=>clearInterval(wait), 6000);
+});
+</script>
+</body>
+</html>

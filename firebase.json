@@ -1,0 +1,23 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaseignore",
+      "**/*.exe",
+      "**/*.sh",
+      "functions/**",
+      "generate*.js",
+      "seed-data.js",
+      "**/.*",
+      "**/node_modules/**"
+
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "login.html"
+      }
+    ]
+  }
+}

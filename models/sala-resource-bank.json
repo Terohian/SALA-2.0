@@ -1,0 +1,43 @@
+{
+  "trees": [
+    {
+      "title": "Binary Search Trees Explained",
+      "type": "Video Lesson",
+      "author": "YouTube",
+      "time": "10 min",
+      "link": "https://www.youtube.com/results?search_query=Binary+Search+Tree+data+structure+tutorial"
+    },
+    {
+      "title": "BST Traversal Guide",
+      "type": "Article",
+      "author": "GeeksforGeeks",
+      "time": "5 min",
+      "link": "https://www.google.com/search?q=site:geeksforgeeks.org+Binary+Search+Tree+Traversal"
+    }
+  ],
+  "sorting": [
+    {
+      "title": "Merge Sort Visualized",
+      "type": "Video Lesson",
+      "author": "YouTube",
+      "time": "8 min",
+      "link": "https://www.youtube.com/results?search_query=Merge+Sort+algorithm+visualization"
+    }
+  ],
+  "tcp_ip": [
+    {
+      "title": "TCP/IP 3-Way Handshake",
+      "type": "Video Lesson",
+      "author": "YouTube",
+      "time": "12 min",
+      "link": "https://www.youtube.com/results?search_query=TCP+IP+3+way+handshake+explained"
+    },
+    {
+      "title": "Networking Layers",
+      "type": "PDF Guide",
+      "author": "Cisco / Google",
+      "time": "15 min",
+      "link": "https://www.google.com/search?q=filetype:pdf+OSI+model+and+TCP+IP+layers"
+    }
+  ]
+}

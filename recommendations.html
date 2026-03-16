@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – AI Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="sala.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+<script src="sala-ai-engine.js" defer></script>
+</head>
+<body>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">🎓</div><div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div></div>
+  <div class="sidebar-user"><div class="user-ava" id="userAva">?</div><div class="user-info"><strong id="userName">Loading...</strong><span id="userRole">Student</span></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main Menu</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='subjects.html'"><span class="nav-icon">📚</span><span>My Subjects</span></div>
+    <div class="nav-item" onclick="location.href='quiz.html'"><span class="nav-icon">🧠</span><span>Take a Quiz</span></div>
+    <div class="nav-item active"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
+    <div class="nav-item" onclick="nav('qa.html')"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
+    <div class="nav-item" onclick="location.href='analytics.html'"><span class="nav-icon">📈</span><span>Analytics</span></div>
+  </nav>
+  <div class="sidebar-footer"><button class="logout-btn" onclick="handleLogout()"><span><i class="fa-solid fa-arrow-right-to-bracket"></i></span><span>Logout</span></button></div>
+</div>
+
+<div class="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title">AI Study Plan</span><span class="topbar-sub">/ Personalized Resources</span>
+  <div class="topbar-spacer"></div>
+  <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode"><i class="fa-solid fa-moon" id="darkToggleIcon"></i></button>
+  <button class="topbar-icon-btn"><i class="fa-regular fa-bell"></i></button>
+</div>
+
+<div class="main-wrap">
+<div class="page-body">
+
+  <div class="page-header">
+    <h1><i class="fa-brands fa-hubspot"></i>Your Adaptive Plan</h1>
+    <p>The AI engine has analyzed your last 5 quizzes and identified these priority focus areas.</p>
+  </div>
+
+  <div class="card mb-24" style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));border:none;color:white">
+    <div style="display:flex;gap:20px;align-items:flex-start">
+      <div style="font-size:32px;background:rgba(255,255,255,.1);width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-carrot"></i></div>
+      <div>
+        <h3 style="font-family:var(--font-display);font-size:18px;margin-bottom:6px">AI Insight: Focus on Data Structures</h3>
+        <p style="font-size:14px;opacity:.8;line-height:1.6;max-width:600px">
+          You are performing well in <strong>OOP</strong> and <strong>Networks</strong> (>75%), but your scores in <strong>Binary Trees</strong> and <strong>Linked Lists</strong> have dropped below 50%. I've adjusted your difficulty to "Medium" and curated these resources for you.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--navy)">🔥 Priority Actions (High Impact)</h3>
+      <div id="priorityList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📉 Knowledge Gaps</div>
+      <canvas id="gapChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--navy)">📚 Curated Resources</h3>
+  <div class="grid-3" id="resourceGrid"></div>
+
+</div>
+</div>
+
+<script>
+const allSkills = [
+  'ethics', 'privacy',            // ICT & Society
+  'regression', 'classification', // Machine Learning
+  'perceptrons', 'backprop',      // Neural Networks
+  'risk', 'compliance',           // IS Audit
+  'encryption', 'networks',       // Cybersecurity
+  'trees', 'arrays'               // Data Structures
+];
+
+// Helper to format skill IDs into nice titles (e.g., 'backprop' -> 'Backprop')
+function formatSkillName(skillId) {
+  return skillId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+async function loadRecommendations(uid) {
+  try {
+    const db = window.salaDB || firebase.firestore();
+    
+    // 2. FETCH THE LIVE USER DATA DIRECTLY FROM FIRESTORE
+    const doc = await db.collection('users').doc(uid).get();
+    if (!doc.exists) return;
+    
+    const bktProfile = doc.data().bkt_profile || {};
+    let aiWeakSkills = [];
+
+    // 3. FIND THE WEAKEST SKILLS
+    // We only look at skills the user has actually been tested on (where they exist in the profile)
+    for (const [skillId, masteryScore] of Object.entries(bktProfile)) {
+      if (masteryScore < 0.75) {
+         aiWeakSkills.push({ skillId, mastery: masteryScore });
+      }
+    }
+
+    // Sort by lowest score first and take the bottom 3
+    aiWeakSkills.sort((a, b) => a.mastery - b.mastery);
+    aiWeakSkills = aiWeakSkills.slice(0, 3);
+    const hasAIData = aiWeakSkills.length > 0;
+
+    // 4. FETCH THE RESOURCE BANK
+    let resourceBank = {};
+    try {
+      const response = await fetch('./models/sala-resource-bank.json'); 
+      resourceBank = await response.json();
+    } catch (e) {
+      console.warn("Could not load sala-resource-bank.json. Using fallbacks.");
+    }
+
+    // 5. RENDER THE DYNAMIC UI
+    let displayResources = [];
+    let prioritiesData = [];
+
+    if (hasAIData) {
+      // Build the Priority Actions list based on their weak skills
+      aiWeakSkills.forEach(weakSkill => {
+        const score = Math.round(weakSkill.mastery * 100);
+        const skillName = formatSkillName(weakSkill.skillId);
+        
+        // Dynamic coloring based on how bad they are failing
+        const color = score < 40 ? 'var(--red, #ff4d6d)' : score < 65 ? 'var(--amber, #ffb703)' : 'var(--teal, #00bfa6)';
+        const bg = score < 40 ? 'rgba(255,77,109,0.08)' : score < 65 ? 'rgba(255,183,3,0.08)' : 'rgba(0,191,166,0.08)';
+
+        prioritiesData.push({
+          title: `Review ${skillName}`,
+          type: 'AI-Targeted Action',
+          time: '15 min',
+          color: color,
+          bg: bg,
+          score: score,
+          skillId: weakSkill.skillId
+        });
+
+        
+        const mappedResources = resourceBank[weakSkill.skillId] || [
+          {
+            type: "Video Lecture",
+            title: `Understanding ${skillName} Concepts`,
+            author: "YouTube Search",
+            time: "Auto-Curated",
+            link: `https://www.youtube.com/results?search_query=${skillName.replace(' ', '+')}+computer+science`
+          },
+          {
+            type: "Study Guide",
+            title: `Deep Dive: Core Principles of ${skillName}`,
+            author: "SALA Library",
+            time: "10 min read",
+            link: "#"
+          }
+        ];
+        displayResources.push(...mappedResources);
+      });
+      
+      // Update the main top banner text
+      const weakNames = prioritiesData.map(p => `<strong>${p.title.replace('Review ', '')}</strong>`).join(', ');
+      document.querySelector('.card h3').textContent = 'AI Insight: Personalized to Your Weaknesses';
+      document.querySelector('.card p').innerHTML = `Based on your recent quizzes, the AI flagged these weak areas: ${weakNames}. The resources below are dynamically curated to help you improve.`;
+      
+      // Hide the "Take a quiz to activate AI" banner if it exists
+      const banner = document.getElementById('aiBannerPlaceholder');
+      if (banner) banner.style.display = 'none';
+
+    } else {
+      // If they have no weak data yet, show the "Take a Quiz" banner
+      showEmptyStateBanner();
+      
+      // And just show some generic resources from the bank so the page isn't blank
+      displayResources = resourceBank['trees'] || []; 
+      document.querySelector('.card h3').textContent = 'AI Engine Standby';
+      document.querySelector('.card p').innerHTML = 'Complete at least one quiz to activate your personalized AI learning path.';
+    }
+
+    // 6. INJECT HTML FOR PRIORITY ACTIONS
+    const priorityListEl = document.getElementById('priorityList');
+    if (prioritiesData.length > 0) {
+      priorityListEl.innerHTML = prioritiesData.map(p => {
+        const scoreTag = `<span style="margin-left:8px;font-weight:700;color:${p.color}">${p.score}%</span>`;
+        return `
+        <div class="card mb-16" style="padding:16px;display:flex;gap:16px;align-items:center;justify-content:space-between;border:1.5px solid ${p.color}; background:${p.bg}; border-left:6px solid ${p.color};">
+          <div>
+            <div style="font-weight:800;color:var(--navy)">${p.title}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">
+              ${p.type} · <i class="fa-regular fa-clock"></i> ${p.time}
+              ${scoreTag}
+            </div>
+          </div>
+          <button class="btn btn-sm" style="background:${p.color}; color:#fff; border:none; box-shadow:0 4px 10px ${p.bg};" onclick="startStudy('${p.skillId}')">Practice</button>
+        </div>`;
+      }).join('');
+    } else {
+      priorityListEl.innerHTML = '<p style="font-size:13px; color:var(--muted); background: var(--surface); padding: 16px; border-radius: 8px;">Take a quiz to see your priority actions!</p>';
+    }
+
+    // 7. INJECT HTML FOR CURATED RESOURCES
+    const resourceGridEl = document.getElementById('resourceGrid');
+    if (displayResources.length > 0) {
+      // Only show up to 6 resources so it doesn't get cluttered
+      resourceGridEl.innerHTML = displayResources.slice(0, 6).map(item =>` 
+        <div class="card" style="padding: 16px; border: 1.5px solid var(--border);">
+          <div style="font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; margin-bottom: 8px;">${item.type || 'Article'}</div>
+          <h4 style="font-family: var(--font-display); font-size: 15px; color: var(--navy); margin-bottom: 8px; line-height: 1.4;">${item.title}</h4>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Source: ${item.author || 'SALA'} · ${item.time || '10 min read'}</p>
+          <button class="btn btn-sm btn-secondary" style="width: 100%;" onclick="window.open('${item.link || '#'}', '_blank')">Access Material</button>
+        </div>`
+      ).join('');
+    } else {
+      resourceGridEl.innerHTML = '<p style="font-size:13px; color:var(--muted);">No specific resources found for your current skill level yet.</p>';
+    }
+
+    // 8. DRAW THE CHART (If there is data to draw)
+    if (prioritiesData.length > 0) {
+      const labels   = prioritiesData.map(p => p.title.replace('Review ', ''));
+      const dataVals = prioritiesData.map(p => p.score);
+      const colors   = prioritiesData.map(p => p.color);
+      const canvas = document.getElementById('gapChart');
+      
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (window._gapChartInstance) window._gapChartInstance.destroy();
+        window._gapChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: { labels, datasets: [{ label: 'Mastery Score (%)', data: dataVals, backgroundColor: colors, borderRadius: 6 }] },
+          options: { scales: { y: { beginAtZero: true, max: 100, ticks: { stepSize: 25 } } }, plugins: { legend: { display: false } } }
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error("Error loading recommendations from Firestore:", error);
+  }
+}
+
+function showEmptyStateBanner() {
+  if (!document.getElementById('aiBannerPlaceholder')) {
+    const banner = document.createElement('div');
+    banner.id = 'aiBannerPlaceholder';
+    banner.className = 'card mb-24';
+    banner.style = 'background:rgba(61,90,254,.06);border:1.5px solid rgba(61,90,254,.2);padding:16px;display:flex;gap:12px;align-items:center';
+    banner.innerHTML = `
+      <span style="font-size:24px">🤖</span>
+      <div>
+        <strong style="color:var(--navy)">AI is ready — take a quiz to activate it!</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:3px">
+          Complete at least one quiz and the AI will personalise these suggestions to your actual performance.
+          <a href="quiz.html" style="color:var(--blue);font-weight:600;margin-left:6px">Take a Quiz →</a>
+        </p>
+      </div>`;
+    document.querySelector('.page-header').after(banner);
+  }
+}
+
+function startStudy(skillId) {
+  // Deep link back to the quiz page, forcing it to test the weak skill
+  window.location.href = `quiz.html?auto=true&skill=${skillId}`;
+}
+
+// 9. THE TRIGGER (Wait for Firebase Auth)
+document.addEventListener('DOMContentLoaded', () => {
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      loadRecommendations(user.uid);
+    } else {
+       // If not logged in, show empty state
+       showEmptyStateBanner();
+    }
+  });
+});
+</script>
+</script>
+</body>
+</html>

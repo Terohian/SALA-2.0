@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Quiz Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="sala.css"/>
+<link rel="manifest" href="manifest.json"/>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="sala-app.js" defer></script>
+<script src="sala-darkmode.js" defer></script>
+<script src="sala-ai-engine.js" defer></script>
+<style>
+.quiz-setup{max-width:680px;margin:0 auto}
+.subject-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.subj-card{
+  padding:18px 14px;border:1.5px solid var(--border);border-radius:14px;
+  cursor:pointer;text-align:center;transition:all .2s;background:var(--card);position:relative;
+}
+.subj-card:hover{border-color:rgba(61,90,254,.35);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.subj-card.active{border-color:var(--blue);background:rgba(61,90,254,.06)}
+.subj-card.active::after{content:'✓';position:absolute;top:8px;right:10px;font-size:12px;font-weight:700;color:var(--blue)}
+.subj-icon{font-size:28px;margin-bottom:8px}
+.subj-name{font-size:13px;font-weight:700;color:var(--navy)}
+.subj-card.active .subj-name{color:var(--blue)}
+.subj-mastery{font-size:11px;color:var(--muted);margin-top:3px}
+.mastery-pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;margin-top:4px}
+
+.diff-row{display:flex;gap:10px;margin-bottom:20px}
+.diff-btn{
+  flex:1;padding:12px 10px;border:1.5px solid var(--border);border-radius:10px;
+  cursor:pointer;text-align:center;background:var(--card);transition:all .18s;font-family:var(--font-body);
+}
+.diff-btn:hover{border-color:rgba(61,90,254,.3)}
+.diff-btn.active{border-color:var(--blue);background:rgba(61,90,254,.06)}
+.diff-btn .diff-icon{font-size:20px;margin-bottom:4px}
+.diff-btn[data-diff="adaptive"].active { border-color: var(--blue); background: rgba(61,90,254,.08); }
+.diff-btn[data-diff="adaptive"].active .diff-name { color: var(--blue); }
+
+.diff-btn[data-diff="easy"].active { border-color: var(--green, #06d6a0); background: rgba(6,214,160,.1); }
+.diff-btn[data-diff="easy"].active .diff-name { color: var(--green, #05b382); }
+
+.diff-btn[data-diff="medium"].active { border-color: var(--amber, #ffb703); background: rgba(255,183,3,.1); }
+.diff-btn[data-diff="medium"].active .diff-name { color: var(--amber, #cc9200); }
+
+.diff-btn[data-diff="hard"].active { border-color: var(--red, #ff4d6d); background: rgba(255,77,109,.1); }
+.diff-btn[data-diff="hard"].active .diff-name { color: var(--red, #cc2244); }
+.diff-btn .diff-desc{font-size:11px;color:var(--muted);margin-top:2px}
+
+.quiz-shell{max-width:700px;margin:0 auto}
+.quiz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.q-counter{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--muted)}
+.q-timer{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:18px;font-weight:600;
+  padding:6px 14px;border-radius:99px;
+  background:rgba(255,183,3,.1);border:1.5px solid rgba(255,183,3,.2);color:#cc9200;
+  transition:all .3s;
+}
+.q-timer.warn{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.2);color:var(--red);animation:pulse 1s infinite}
+
+.badge-diff-adaptive { background: rgba(61,90,254,.1); color: var(--blue); border: 1px solid rgba(61,90,254,.2); }
+.badge-diff-easy { background: rgba(6,214,160,.1); color: var(--green, #05b382); border: 1px solid rgba(6,214,160,.2); }
+.badge-diff-medium { background: rgba(255,183,3,.1); color: var(--amber, #cc9200); border: 1px solid rgba(255,183,3,.2); }
+.badge-diff-hard { background: rgba(255,77,109,.1); color: var(--red, #cc2244); border: 1px solid rgba(255,77,109,.2); }
+.quiz-progress-track{height:5px;background:var(--surface2);border-radius:99px;margin-bottom:24px;overflow:hidden}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:99px;transition:width .5s ease}
+
+.q-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:32px;box-shadow:var(--shadow-md)}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.q-num{font-size:12px;font-weight:700;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:99px}
+.q-text{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--navy);line-height:1.5;margin-bottom:24px}
+
+.options{display:flex;flex-direction:column;gap:10px}
+.opt{
+  display:flex;align-items:center;gap:14px;
+  padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;
+  cursor:pointer;transition:all .2s;background:var(--card);text-align:left;font-family:var(--font-body);
+  width:100%;
+}
+.opt:hover:not(.locked){border-color:rgba(61,90,254,.4);background:rgba(61,90,254,.03);transform:translateX(3px)}
+.opt.selected{border-color:var(--blue);background:rgba(61,90,254,.06)}
+.opt.correct{border-color:var(--green)!important;background:rgba(6,214,160,.08)!important}
+.opt.wrong{border-color:var(--red)!important;background:rgba(255,77,109,.08)!important}
+.opt.locked{cursor:default;transform:none!important}
+.opt-letter{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;font-family:var(--font-display);
+  border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);
+  transition:all .2s;
+}
+.opt.selected .opt-letter{border-color:var(--blue);background:var(--blue);color:#fff}
+.opt.correct .opt-letter{border-color:var(--green);background:var(--green);color:#fff}
+.opt.wrong .opt-letter{border-color:var(--red);background:var(--red);color:#fff}
+.opt-text{font-size:14.5px;font-weight:500;color:var(--text);line-height:1.4;flex:1;text-align:left}
+.opt.correct .opt-text{color:#05b382;font-weight:600}
+.opt.wrong .opt-text{color:var(--red);font-weight:600}
+.opt-check{font-size:18px;margin-left:auto;opacity:0;transition:opacity .2s}
+.opt.correct .opt-check,.opt.wrong .opt-check{opacity:1}
+
+.q-actions{display:flex;align-items:center;justify-content:space-between;margin-top:24px}
+.hint-btn{background:rgba(255,183,3,.1);color:#cc9200;border:1.5px solid rgba(255,183,3,.2);border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .18s}
+.hint-btn:hover{background:rgba(255,183,3,.2)}
+.hint-box{
+  margin-top:14px;padding:14px 16px;
+  background:rgba(255,183,3,.08);border:1.5px solid rgba(255,183,3,.2);
+  border-radius:10px;font-size:13px;color:#7a5a00;line-height:1.6;display:none;
+}
+.hint-box.show{display:block}
+
+.feedback-box{
+  margin-top:16px;padding:16px;border-radius:12px;font-size:13.5px;font-weight:500;
+  line-height:1.6;display:none;
+}
+.feedback-box.correct-fb{display:block;background:rgba(6,214,160,.08);border:1.5px solid rgba(6,214,160,.2);color:#05b382}
+.feedback-box.wrong-fb{display:block;background:rgba(255,77,109,.07);border:1.5px solid rgba(255,77,109,.2);color:#cc2244}
+
+.next-btn{padding:12px 28px;background:linear-gradient(135deg,var(--blue),var(--blue-soft));color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font-body);box-shadow:0 4px 16px rgba(61,90,254,.3);transition:all .2s;opacity:.4;pointer-events:none}
+.next-btn.enabled{opacity:1;pointer-events:all}
+.next-btn.enabled:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(61,90,254,.4)}
+
+/* Result */
+.result-wrap{max-width:600px;margin:0 auto;text-align:center}
+.result-score-ring{
+  width:140px;height:140px;border-radius:50%;margin:0 auto 24px;
+  background:conic-gradient(var(--blue) 0%,var(--teal) var(--pct,0%),var(--surface2) 0%);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.result-score-ring::before{content:'';position:absolute;inset:12px;border-radius:50%;background:var(--card)}
+.result-score-num{position:relative;z-index:1;font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--navy)}
+.result-message{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.result-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.result-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.breakdown-item{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);padding:16px;text-align:center}
+.breakdown-val{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--navy)}
+.breakdown-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.review-list{text-align:left;margin-bottom:24px}
+.review-item{display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.review-item:last-child{border-bottom:none}
+.review-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.review-q{font-size:13px;color:var(--navy);flex:1}
+.review-ans{font-size:12px;margin-top:3px}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon">🎓</div><div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div></div>
+  <div class="sidebar-user"><div class="user-ava" id="userAva">?</div><div class="user-info"><strong id="userName">Loading...</strong><span id="userRole">Student</span></div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main Menu</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='subjects.html'"><span class="nav-icon">📚</span><span>My Subjects</span></div>
+    <div class="nav-item active"><span class="nav-icon">🧠</span><span>Take a Quiz</span></div>
+    <div class="nav-item" onclick="location.href='recommendations.html'"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
+    <div class="nav-item" onclick="nav('qa.html')"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
+    <div class="nav-item" onclick="location.href='analytics.html'"><span class="nav-icon">📈</span><span>Analytics</span></div>
+    <div class="nav-section-label">Admin</div>
+    <div class="nav-item" onclick="location.href='admin.html'"><span class="nav-icon">⚙️</span><span>Admin Panel</span></div>
+  </nav>
+  <div class="sidebar-footer"><button class="logout-btn" onclick="location.href='login.html'"><span><i class="fa-solid fa-arrow-right-to-bracket"></i></span><span>Logout</span></button></div>
+</div>
+
+<div class="topbar">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span class="topbar-title">Quiz Engine</span><span class="topbar-sub">/ Adaptive Assessment</span>
+  <div class="topbar-spacer"></div>
+    <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode"><i class="fa-solid fa-moon" id="darkToggleIcon"></i></button>
+  <button class="topbar-icon-btn">🔔<span class="notif-dot"></span></button>
+</div>
+
+<div class="main-wrap">
+<div class="page-body">
+  <div id="setupPanel">
+    <div class="page-header"><h1>🧠 Take a Quiz</h1><p>Select a subject and difficulty. The AI will adapt questions to your level.</p></div>
+    <div class="quiz-setup">
+      <div class="card mb-20">
+        <div class="card-title">Choose Subject</div>
+        <div class="subject-picker" id="subjPicker"></div>
+        <div class="card-title" style="margin-top:4px">Difficulty Mode</div>
+        <div class="diff-row" id="diffPicker">
+          <div class="diff-btn active" data-diff="adaptive" onclick="selDiff(this)">
+            <div class="diff-name">Adaptive</div><div class="diff-desc">AI adjusts live</div>
+          </div>
+          <div class="diff-btn" data-diff="easy" onclick="selDiff(this)">
+            <div class="diff-name">Easy</div><div class="diff-desc">Build confidence</div>
+          </div>
+          <div class="diff-btn" data-diff="medium" onclick="selDiff(this)">
+            <div class="diff-name">Medium</div><div class="diff-desc">Standard level</div>
+          </div>
+          <div class="diff-btn" data-diff="hard" onclick="selDiff(this)">
+            <div class="diff-name">Hard</div><div class="diff-desc">Maximum challenge</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="flex:1">
+            <label class="form-label">Number of Questions</label>
+            <select class="form-control" id="qCount">
+              <option value="5">5 Questions (~10 min)</option>
+              <option value="10" selected>10 Questions (~20 min)</option>
+              <option value="15">15 Questions (~30 min)</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label class="form-label">Time per Question</label>
+            <select class="form-control" id="qTime">
+              <option value="20">20 seconds</option>
+              <option value="30" selected>30 seconds</option>
+              <option value="45">45 seconds</option>
+              <option value="60">60 seconds</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" onclick="startQuiz()">🚀 Begin Adaptive Quiz</button>
+    </div>
+  </div>
+
+  <div id="quizPanel" style="display:none">
+    <div class="quiz-shell">
+      <div class="quiz-header">
+        <span class="q-counter" id="qCounter">Q 1 / 10</span>
+        <span class="q-timer" id="qTimer">⏱ 30</span>
+        <span class="badge badge-blue" id="diffBadge">Adaptive</span>
+      </div>
+      <div class="quiz-progress-track"><div class="quiz-progress-fill" id="qBar" style="width:10%"></div></div>
+      <div class="q-card">
+        <div class="q-meta">
+          <span class="q-num" id="qNum">Question 1</span>
+          <span class="badge badge-gray" id="topicBadge">Data Structures</span>
+        </div>
+        <div class="q-text" id="qText">Loading…</div>
+        <div class="options" id="qOptions"></div>
+        <div class="feedback-box" id="feedbackBox"></div>
+        <div class="hint-box" id="hintBox"></div>
+        <div class="q-actions">
+          <button class="hint-btn" onclick="showHint()" id="hintBtn">💡 Hint</button>
+          <button class="next-btn" id="nextBtn" onclick="nextQ()">Next Question</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultPanel" style="display:none">
+    <div class="result-wrap">
+      <div style="font-size:52px;margin-bottom:16px" id="resultEmoji">🎉</div>
+      <div class="result-score-ring" id="scoreRing">
+        <span class="result-score-num" id="scoreNum">0%</span>
+      </div>
+      <div class="result-message" id="resultMsg">Quiz Complete!</div>
+      <div class="result-sub" id="resultSub">The AI has updated your personalized learning path.</div>
+      <div class="result-breakdown">
+        <div class="breakdown-item"><div class="breakdown-val text-green" id="resCorrect">0</div><div class="breakdown-lbl">Correct</div></div>
+        <div class="breakdown-item"><div class="breakdown-val text-red" id="resWrong">0</div><div class="breakdown-lbl">Wrong</div></div>
+        <div class="breakdown-item"><div class="breakdown-val" id="resTime">0:00</div><div class="breakdown-lbl">Time Taken</div></div>
+      </div>
+      <div class="card mb-20">
+        <div class="card-title">📋 Answer Review</div>
+        <div class="review-list" id="reviewList"></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="location.href='recommendations.html'">✨ View AI Recommendations</button>
+        <button class="btn btn-secondary" onclick="showSetup()">🔄 Try Another Quiz</button>
+        <button class="btn btn-secondary" onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // 1. GLOBAL STATE
+var SUBJECTS = []; 
+var state = { currentDifficultyLabel: 'medium' };
+var timerInterval = null;
+
+
+// 2. FETCH REAL SUBJECTS FROM FIRESTORE
+async function fetchRealStudentSubjects() {
+  const studentId = window.salaAuth?.currentUser?.uid;
+
+  if (!studentId) {
+    document.getElementById('subjPicker').innerHTML =
+      '<p style="color:var(--red)">Please log in to view your subjects.</p>';
+    return false;
+  }
+
+  try {
+    const db = window.salaDB;
+    const userDoc = await db.collection('users').doc(studentId).get();
+
+    if (!userDoc.exists) {
+      document.getElementById('subjPicker').innerHTML =
+        '<p style="color:var(--muted)">No student profile found.</p>';
+      return false;
+    }
+
+    // ✅ Declare userData FIRST before using it
+    const userData = userDoc.data();
+    const enrolledIds = userData.enrolledSubjects || [];
+    const userProgramme = userData.programme || 'cs';
+    const userLevel = userData.level || 'y1s1';
+
+    if (enrolledIds.length === 0) {
+      document.getElementById('subjPicker').innerHTML =
+        '<p style="color:var(--muted)">You are not enrolled in any subjects. ' +
+        '<a href="subjects.html">Go to Course Catalog</a> to enroll.</p>';
+      return false;
+    }
+
+    // ✅ Use PROGRAMME_CATALOG only — no old hardcoded array
+    const levelSubjects = window.getProgrammeSubjects(userProgramme, userLevel);
+
+    if (!levelSubjects.length) {
+      document.getElementById('subjPicker').innerHTML =
+        '<p style="color:var(--muted)">No subjects found for your programme/level.</p>';
+      return false;
+    }
+
+    SUBJECTS = levelSubjects.filter(s => enrolledIds.includes(s.id));
+
+    if (SUBJECTS.length === 0) {
+      document.getElementById('subjPicker').innerHTML =
+        '<p style="color:var(--muted)">No enrolled units found. ' +
+        '<a href="subjects.html">Go to Course Catalog</a> to enroll.</p>';
+      return false;
+    }
+
+    renderSetup();
+    return true;
+
+  } catch (error) {
+    console.error('Firebase connection failed:', error);
+    document.getElementById('subjPicker').innerHTML =
+      '<p style="color:var(--red)">Failed to load subjects. Check your connection.</p>';
+    return false;
+  }
+}
+
+
+function renderSetup(){
+  if (SUBJECTS.length === 0) return;
+  document.getElementById('subjPicker').innerHTML = SUBJECTS.map((s, index) => `
+    <div class="subj-card ${index === 0 ? 'active' : ''}" data-id="${s.id}" onclick="selSubj(this,'${s.id}')">
+      <div class="subj-icon">${s.icon}</div>
+      <div class="subj-name">${s.name}</div>
+    </div>
+  `).join('');
+  
+}
+
+let selectedSubj = '';
+function selSubj(el, id){
+  document.querySelectorAll('.subj-card').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active'); 
+  selectedSubj = id;
+}
+
+var selectedDiff = 'adaptive';
+function selDiff(el){
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); 
+  selectedDiff = el.dataset.diff;
+}
+
+
+async function startQuiz() {
+  if (!selectedSubj) {
+    alert("Please select a subject first!");
+    return;
+  }
+
+  const startBtn = document.querySelector('.btn-primary[onclick="startQuiz()"]');
+  const originalText = startBtn ? startBtn.innerHTML : 'Start Quiz';
+  
+  if (startBtn) {
+    startBtn.innerHTML = '☁️ AI is building your quiz...';
+    startBtn.style.opacity = '0.8';
+    startBtn.style.pointerEvents = 'none';
+  }
+
+  try {
+    let engine = window.quizEngine || (window.salaApp && window.salaApp.quizEngine) || window.quiz;
+    
+    if (!engine) {
+      // If the engine class hasn't attached yet, fallback to dummy data just so the UI works
+      console.warn("Quiz Engine class not found. Falling back to UI demo mode.");
+      simulateQuizStart();
+      return;
+    }
+
+    // This is where it calls your external sala-app.js logic!
+    const success = await engine.loadSubject(selectedSubj);
+
+    if (success) {
+      document.getElementById('setupPanel').style.display = 'none';
+      document.getElementById('quizPanel').style.display = 'block';
+      renderQuestion();
+    } else {
+      resetStartBtn(startBtn, originalText);
+      alert("Failed to pull questions from the database.");
+    }
+  } catch (error) {
+    console.error("Quiz start error:", error);
+    resetStartBtn(startBtn, originalText);
+  }
+}
+
+function resetStartBtn(btn, text) {
+    if (btn) {
+        btn.innerHTML = text;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }
+}
+
+// DEMO UI FALLBACK
+function simulateQuizStart() {
+    state = {
+        subj: selectedSubj,
+        diff: selectedDiff,
+        currentDifficultyLabel: 'medium',
+        total: parseInt(document.getElementById('qCount').value) || 5,
+        timePerQ: parseInt(document.getElementById('qTime').value) || 30,
+        current: 0, correct: 0, wrong: 0, answers: [], startTime: Date.now(),
+        questions: [
+            { 
+              q: `This is a live test question for ${selectedSubj.toUpperCase()}. Which option is correct?`, 
+              opts: ["Option A", "The Correct Option", "Option C", "Option D"], 
+              ans: 1, 
+              hint: "Try looking closely at the second option.", 
+              fb: { c: "Nailed it!", w: "Not quite. It was the second option." } 
+            },
+            { 
+              q: "Another simulated question to test the UI flow.", 
+              opts: ["Wrong", "Wrong", "Right", "Wrong"], 
+              ans: 2, 
+              hint: "It's option C.", 
+              fb: { c: "Excellent!", w: "Oops!" } 
+            }
+        ]
+    };
+    
+    document.getElementById('setupPanel').style.display = 'none';
+    document.getElementById('quizPanel').style.display = 'block';
+    renderQuestion();
+}
+
+function renderQuestion(){
+  const {questions,current,total,timePerQ,diff} = state;
+  const q = questions[current] || { q: "End of dummy questions", opts: ["A","B","C","D"], ans: 0, hint: "", fb: {c:"",w:""} };
+  state.hintUsed = false;
+
+  document.getElementById('qCounter').textContent = `Q ${current+1} / ${total}`;
+  document.getElementById('qBar').style.width = `${((current+1)/total)*100}%`;
+  document.getElementById('qNum').textContent = `Question ${current+1}`;
+  
+  // Extra safety net added here just in case!
+  const activeDiff = (diff === 'adaptive') ? (state.currentDifficultyLabel || 'medium') : diff;
+  const badge = document.getElementById('diffBadge');
+  badge.textContent = diff === 'adaptive' ? `AI: ${activeDiff.charAt(0).toUpperCase() + activeDiff.slice(1)}` : activeDiff.charAt(0).toUpperCase() + activeDiff.slice(1);
+  badge.className = `badge badge-diff-${activeDiff.toLowerCase()}`;
+  
+  document.getElementById('topicBadge').textContent = SUBJECTS.find(s=>s.id===state.subj)?.name||selectedSubj.toUpperCase();
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('feedbackBox').className='feedback-box';
+  document.getElementById('feedbackBox').style.display='none';
+  document.getElementById('hintBox').className='hint-box';
+  document.getElementById('hintBox').style.display='none'; // Ensure hint is hidden on new question
+  document.getElementById('hintBtn').disabled=false;
+  
+  const nextBtn=document.getElementById('nextBtn');
+  nextBtn.className='next-btn'; nextBtn.textContent='Next Question →';
+  nextBtn.classList.remove('enabled'); // Ensure it's locked until they answer
+
+  const letters=['A','B','C','D'];
+  document.getElementById('qOptions').innerHTML = q.opts.map((opt,i)=>`
+    <button class="opt" onclick="selectAns(${i})" id="opt${i}">
+      <span class="opt-letter">${letters[i]}</span>
+      <span class="opt-text">${opt}</span>
+      <span class="opt-check" id="chk${i}"></span>
+    </button>`).join('');
+
+  state.qStartTime = Date.now();
+  startTimer(timePerQ);
+}
+
+function startTimer(s){
+  clearInterval(timerInterval);
+  let t=s;
+  const el=document.getElementById('qTimer');
+  const update=()=>{el.textContent=`⏱ ${t}`;el.classList.toggle('warn',t<=5)};
+  update();
+  timerInterval=setInterval(()=>{
+    t--;update();
+    if(t<=0){clearInterval(timerInterval);timeUp();}
+  },1000);
+}
+
+function timeUp(){
+  clearInterval(timerInterval);
+  checkAnswer(-1);
+}
+
+function lockOptions(ans,sel){
+  document.querySelectorAll('.opt').forEach((btn,i)=>{
+    btn.classList.add('locked');
+    if(i===ans){btn.classList.add('correct');document.getElementById('chk'+i).textContent='✓';}
+    else if(i===sel&&sel!==ans){btn.classList.add('wrong');document.getElementById('chk'+i).textContent='✗';}
+  });
+}
+
+function showFeedback(ok,msg){
+  const fb=document.getElementById('feedbackBox');
+  fb.className=`feedback-box ${ok?'correct-fb':'wrong-fb'}`;
+  fb.textContent=(ok?'✅ ':'❌ ')+msg;
+}
+
+function showHint(){
+  const q=state.questions[state.current];
+  document.getElementById('hintBox').className='hint-box show';
+  document.getElementById('hintBox').textContent='💡 Hint: '+(q.hint || "Try breaking the problem down.");
+  document.getElementById('hintBtn').disabled=true;
+  state.hintUsed=true;
+}
+
+function enableNext(){
+  const btn=document.getElementById('nextBtn');
+  btn.className='next-btn enabled';
+  const isLast=state.current>=state.total-1;
+  btn.textContent=isLast?'See Results 🎉':'Next Question →';
+}
+
+function selectAns(selectedIndex) {
+  if (document.querySelector('.opt.locked')) return; 
+  checkAnswer(selectedIndex);
+}
+
+function checkAnswer(selected){
+  clearInterval(timerInterval);
+  const q = state.questions[state.current];
+  const correct = q.ans;
+  const ok = selected === correct;
+
+  lockOptions(correct, selected);
+  if (ok) state.correct++; else state.wrong++;
+
+  const timeTaken = Math.floor((Date.now() - state.qStartTime) / 1000);
+  state.answers.push({ q: q.q, selected: selected, correct: correct, opts: q.opts, ok, timeTaken });
+
+  showFeedback(ok, ok ? (q.fb.c || "Correct!") : (q.fb.w || "Incorrect."));
+  enableNext();
+}
+
+function nextQ(){
+  state.current++;
+  if(state.current>=state.total){showResult();return;}
+  renderQuestion();
+}
+
+async function showResult(){
+  document.getElementById('quizPanel').style.display='none';
+  document.getElementById('resultPanel').style.display='block';
+  
+  const {correct,total,wrong,answers,startTime,subj}=state;
+  const pct=Math.round((correct/total)*100);
+  const elapsed=Math.floor((Date.now()-startTime)/1000);
+  const mins=Math.floor(elapsed/60),secs=elapsed%60;
+
+  // 1. Update the Basic UI
+  document.getElementById('resultEmoji').textContent=pct>=80?'🎉':pct>=60?'👍':'📚';
+  document.getElementById('scoreNum').textContent=pct+'%';
+  document.getElementById('scoreRing').style.setProperty('--pct',pct+'%');
+  document.getElementById('resCorrect').textContent=correct;
+  document.getElementById('resWrong').textContent=wrong;
+  document.getElementById('resTime').textContent=`${mins}:${String(secs).padStart(2,'0')}`;
+
+  const reviewHTML = answers.map((a,i)=>`
+    <div class="review-item">
+      <div class="review-icon">${a.ok?'✅':'❌'}</div>
+      <div>
+        <div class="review-q">${i+1}. ${a.q}</div>
+        <div class="review-ans" style="color:${a.ok?'var(--green)':'var(--red)'}">
+          Your answer: <strong>${a.selected>=0 ? a.opts[a.selected] : '(No answer — timed out)'}</strong>
+          ${!a.ok ? `<span style="color:var(--muted)"> · Correct: <strong>${a.opts[a.correct]}</strong></span>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+  document.getElementById('reviewList').innerHTML = reviewHTML;
+
+  const uid = window.salaAuth?.currentUser?.uid || firebase.auth().currentUser?.uid;
+  if (uid) {
+    try {
+      const db = window.salaDB || firebase.firestore();
+      
+      // A. Save to Quiz History (powers the Analytics page)
+      await db.collection('users').doc(uid).collection('quiz_history').add({
+        subject: subj,
+        score: pct,
+        correct: correct,
+        totalQuestions: total,
+        timeSpent: elapsed,
+        completedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // B. Update the AI Mastery (BKT) Profile
+      const userRef = db.collection('users').doc(uid);
+      const doc = await userRef.get();
+      let bkt = doc.data().bkt_profile || {};
+      
+      answers.forEach(ans => {
+        // Find the specific skill for this question
+        const skill = state.questions.find(q => q.q === ans.q)?.skill || subj;
+        
+        if (!bkt[skill]) bkt[skill] = 0.3; // Default starting mastery (30%)
+        
+        // Simple Bayesian update math
+        if (ans.ok) {
+          bkt[skill] = Math.min(0.99, bkt[skill] + 0.15); // Add 15% mastery if correct
+        } else {
+          bkt[skill] = Math.max(0.1, bkt[skill] - 0.05); // Drop 5% if wrong
+        }
+      });
+
+      await userRef.update({ bkt_profile: bkt });
+      console.log("✅ AI Mastery Profile and Quiz History successfully updated in the cloud!");
+
+    } catch (error) {
+      console.error("❌ Failed to save results to cloud:", error);
+    }
+  }
+}
+
+function showSetup(){
+  document.getElementById('resultPanel').style.display='none';
+  document.getElementById('setupPanel').style.display='block';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (!user) return;
+
+    if (window.salaAuth) window.salaAuth.currentUser = user;
+
+    const hasSubjects = await fetchRealStudentSubjects();
+    if (!hasSubjects) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const targetSubject = params.get('subject');
+    if (targetSubject) {
+      const subjCard = document.querySelector(`.subj-card[data-id="${targetSubject}"]`);
+      if (subjCard) {
+        selSubj(subjCard, targetSubject);
+        setTimeout(() => startQuiz(), 500);
+      }
+    }
+  });
+});
+
+</script>
+</body>
+</html>
