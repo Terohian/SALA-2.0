@@ -336,25 +336,17 @@ body{background:var(--surface);display:flex;align-items:flex-start;justify-conte
       </div>
 
       <div style="margin-bottom:24px">
-        <label class="form-label">Account Role <span class="req">*</span></label>
-        <div class="role-grid" id="roleGrid">
-          <div class="role-option" data-role="student" onclick="selectRole(this)">
-            <div class="role-emoji">👨‍🎓</div>
-            <div class="role-title">Student</div>
-            <div class="role-desc">Take quizzes, view recommendations & track progress</div>
-          </div>
-          <div class="role-option" data-role="lecturer" onclick="selectRole(this)">
-            <div class="role-emoji">👨‍🏫</div>
-            <div class="role-title">Lecturer</div>
-            <div class="role-desc">Upload content, view class analytics & manage topics</div>
-          </div>
-          <div class="role-option" data-role="admin" onclick="selectRole(this)">
-            <div class="role-emoji">⚙️</div>
-            <div class="role-title">Admin</div>
-            <div class="role-desc">Full system access, user management & configuration</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;
+                    background:rgba(61,90,254,.06);border:1.5px solid rgba(61,90,254,.2);
+                    border-radius:10px;font-size:13.5px;color:var(--text2)">
+          <span style="font-size:20px">👨‍🎓</span>
+          <div>
+            <strong style="color:var(--navy)">Registering as Student</strong>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">
+              Lecturers and admins are added directly by the Super Admin.
+            </div>
           </div>
         </div>
-        <div class="form-hint">⚠️ Lecturer and Admin roles require approval from the system administrator</div>
       </div>
 
       <div class="form-grid">
@@ -409,7 +401,7 @@ body{background:var(--surface);display:flex;align-items:flex-start;justify-conte
 
 <script>
 let currentStep = 1;
-let selectedRole = 'student';
+let selectedRole = 'student'; // Registration is students only — selectRole() kept for safety
 
 function onProgrammeChange(programmeKey) {
   const levelGroup = document.getElementById('levelGroup');
@@ -493,7 +485,7 @@ function validateStep(n) {
 function selectRole(el) {
   document.querySelectorAll('.role-option').forEach(r=>r.classList.remove('active'));
   el.classList.add('active');
-  selectedRole=el.dataset.role;
+  selectedRole = 'student'; // always student
 }
 
 function toggleSubj(el){el.classList.toggle('active')}
@@ -533,46 +525,64 @@ function previewPhoto(input){
 }
 
 async function doRegister() {
-  if(!validateStep(3)) return;
-  
+  // Step 3 validation — passwords must match and be 8+ chars
+  if (!validateStep(3)) return;
+
   const btn = document.querySelector('.btn-register');
-  const originalText = btn.innerHTML; // Save the original text to restore if it fails
-  btn.textContent = 'Creating account…'; 
-  btn.style.opacity = '.8'; 
+  btn.innerHTML = '<span>Creating account…</span>';
+  btn.style.opacity = '.75';
   btn.style.pointerEvents = 'none';
 
-  const emailInput = document.getElementById('email').value.trim();
-  const passwordInput = document.getElementById('password').value;
-  const firstNameInput = document.getElementById('firstName').value.trim();
-  const lastNameInput = document.getElementById('lastName').value.trim();
-  const yearInput = document.getElementById('year').value;
-  const enrolledSubjects = Array.from(document.querySelectorAll('.subject-chip.active')).map(chip => chip.dataset.id);
+  // Gather form values
+  const name      = (document.getElementById('firstName').value.trim() + ' ' +
+                     document.getElementById('lastName').value.trim()).trim();
+  const email     = document.getElementById('email').value.trim();
+  const password  = document.getElementById('password').value;
+  const regNum    = document.getElementById('studentId').value.trim();
+  const programme = document.getElementById('programme').value || 'cs';
+  const level     = document.getElementById('level').value    || 'y1s1';
 
-  if (!window.salaAuth) {
-    showToast('App failed to load. Please refresh.');
-        return;
+  // Wait up to 3 seconds for sala-app.js (deferred) to initialise salaAuth
+  for (let i = 0; i < 30; i++) {
+    if (window.salaAuth) break;
+    await new Promise(r => setTimeout(r, 100));
   }
 
-  const authResult = await window.salaAuth.register(
-    `${firstNameInput} ${lastNameInput}`,
-     emailInput,
-     passwordInput,
-     selectedRole,
-     document.getElementById('studentId').value.trim(),
-     document.getElementById('programme').value || 'cs',
-     document.getElementById('level').value || 'y1s1'
+  if (!window.salaAuth) {
+    showToast('⚠️ App failed to initialise. Please refresh and try again.');
+    btn.innerHTML = '🎉 Create My Account';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    return;
+  }
+
+  try {
+    const result = await window.salaAuth.register(
+      name, email, password,
+      'student',   // always student — admins create other roles via Super Admin panel
+      regNum, programme, level
     );
 
-  if (authResult.success) {
-      showToast('🎉 Account created! Redirecting to dashboard…');
-      setTimeout(() => window.location.href = 'dashboard.html', 1200);
-  } else {
-      // Show the actual error to the user (e.g. "Email already in use")
-      showToast('⚠️ Registration failed: ' + authResult.message);
-      btn.innerHTML = originalText;
+    if (result.success) {
+      showToast('🎉 Account created! Taking you to your dashboard…');
+      setTimeout(() => window.location.href = 'dashboard.html', 1400);
+    } else {
+      let msg = result.message || 'Registration failed.';
+      // Make Firebase error messages more human-friendly
+      if (msg.includes('email-already-in-use')) msg = 'That email is already registered. Try logging in instead.';
+      if (msg.includes('invalid-email'))        msg = 'Please enter a valid email address.';
+      if (msg.includes('weak-password'))        msg = 'Password is too weak. Use at least 8 characters.';
+      showToast('⚠️ ' + msg);
+      btn.innerHTML = '🎉 Create My Account';
       btn.style.opacity = '1';
       btn.style.pointerEvents = 'auto';
-
+    }
+  } catch (err) {
+    console.error('Registration error:', err);
+    showToast('⚠️ Something went wrong. Please try again.');
+    btn.innerHTML = '🎉 Create My Account';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
   }
 }
 
