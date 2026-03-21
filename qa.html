@@ -235,7 +235,6 @@
                      font-family:var(--font-body);font-size:13.5px;color:var(--text2);
                      background:var(--card);cursor:pointer;transition:border .18s">
               <option value="general">💬 General / Any Topic</option>
-              <option value="general" disabled>── Your Enrolled Subjects ──</option>
             </select>
             <div style="font-size:11.5px;color:var(--muted);margin-top:5px">
               <i class="fa-solid fa-circle-info" style="color:var(--blue);margin-right:4px"></i>
@@ -508,15 +507,17 @@ function renderThreads() {
 }
 
 function getSubjectInfo(id) {
-  if (!window.PROGRAMME_CATALOG) return { name: id.toUpperCase(), icon: '📚' };
-  for (const prog of Object.values(window.PROGRAMME_CATALOG))
-    for (const lvl of Object.values(prog.levels)) {
-      const s = lvl.subjects.find(x => x.id === id);
-      if (s) return s;
-    }
-  return { name: id.toUpperCase(), icon: '📚' };
+  if (!id || id === 'general') return { name: 'General', icon: '💬' };
+  if (window.PROGRAMME_CATALOG) {
+    for (const prog of Object.values(window.PROGRAMME_CATALOG))
+      for (const lvl of Object.values(prog.levels)) {
+        const s = lvl.subjects.find(x => x.id === id);
+        if (s) return s;
+      }
+  }
+  const name = id.split('_').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+  return { name: name, icon: '📚' };
 }
-
 function threadCardHTML(t) {
   const subj     = getSubjectInfo(t.subject);
   const when     = timeAgo(t._ts);
