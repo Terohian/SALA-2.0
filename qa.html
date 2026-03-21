@@ -414,10 +414,8 @@ async function loadThreads() {
     // No orderBy → no composite index required; sorted client-side below
     let query = db.collection('qa_threads').limit(100);
 
-    // ✅ Fixed: was `enrolledIds` (undefined) — now correctly uses `enrolledSubjects`
-    if (currentRole !== 'admin' && currentRole !== 'lecturer' && enrolledSubjects.length > 0) {
-      query = query.where('subject', 'in', enrolledSubjects.slice(0, 10));
-    }
+    // No subject filter — students can ask and see questions on ANY subject.
+    // The sidebar filter dropdown lets them narrow by subject manually if they want.
 
     const snap = await query.get();
     allThreads = [];
