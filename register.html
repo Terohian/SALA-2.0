@@ -1,830 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>SALA – Q&A Forum</title>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="sala.css"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SALA – Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="sala-app.js" defer></script>
-<script src="sala-darkmode.js" defer></script>
 <style>
-.qa-layout  { display:grid; grid-template-columns:260px 1fr; gap:24px; align-items:start; }
-.qa-sidebar { position:sticky; top:calc(var(--topbar-h) + 24px); }
-
-.ask-btn {
-  width:100%; padding:12px; margin-bottom:16px;
+:root{
+  --navy:#080c21;--blue:#3d5afe;--blue-soft:#5c78ff;--teal:#00bfa6;
+  --purple:#7c4dff;--red:#ff4d6d;--green:#06d6a0;--amber:#ffb703;
+  --surface:#f5f7ff;--card:#fff;--border:#e4e8f7;--muted:#8892b0;
+  --text:#060b24;--text2:#3d4577;
+  --font-d:'Sora',sans-serif;--font-b:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font-b);background:var(--surface);
+  display:flex;align-items:flex-start;justify-content:center;padding:40px 16px 80px}
+.wrap{width:100%;max-width:520px}
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:44px;height:44px;border-radius:13px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 4px 16px rgba(61,90,254,.35)}
+.logo-name{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--navy)}
+.sign-in{font-size:13.5px;color:var(--muted)}
+.sign-in a{color:var(--blue);font-weight:600;text-decoration:none}
+.card{background:var(--card);border:1.5px solid var(--border);
+  border-radius:18px;padding:32px;box-shadow:0 4px 24px rgba(15,21,53,.07)}
+.card-title{font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.card-sub{font-size:13.5px;color:var(--muted);margin-bottom:24px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:480px){.row{grid-template-columns:1fr}}
+.fg{margin-bottom:16px}
+.lbl{display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.opt{font-size:11px;color:var(--muted);font-weight:400}
+.iw{position:relative}
+.ii{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none}
+.inp{width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--border);
+  border-radius:10px;background:var(--card);font-size:14px;
+  font-family:var(--font-b);color:var(--navy);transition:border .18s,box-shadow .18s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(61,90,254,.1);outline:none}
+.inp::placeholder{color:var(--muted)}
+.inp.ni{padding-left:14px}
+.pw-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px}
+.pw-bars{display:flex;gap:4px;margin-top:7px}
+.pw-bar{flex:1;height:4px;border-radius:99px;background:var(--border);transition:background .2s}
+.pw-bar.weak{background:var(--red)}.pw-bar.ok{background:var(--amber)}.pw-bar.good{background:var(--green)}
+.pw-hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.err{font-size:12px;color:var(--red);margin-top:4px;display:none}
+.err.show{display:block}
+.badge{display:flex;align-items:center;gap:10px;padding:12px 16px;
+  background:rgba(61,90,254,.06);border:1.5px solid rgba(61,90,254,.18);
+  border-radius:10px;margin-bottom:20px}
+.badge strong{font-size:13px;color:var(--navy);display:block}
+.badge span{font-size:11.5px;color:var(--muted)}
+.err-banner{display:none;align-items:center;gap:10px;
+  background:rgba(255,77,109,.07);border:1.5px solid rgba(255,77,109,.2);
+  border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--red)}
+.err-banner.show{display:flex}
+.btn{width:100%;padding:14px;margin-top:8px;
   background:linear-gradient(135deg,var(--blue),var(--blue-soft));
-  color:#fff; border:none; border-radius:var(--r-md);
-  font-size:14px; font-weight:700; font-family:var(--font-body);
-  cursor:pointer; transition:all .2s; box-shadow:0 4px 16px rgba(61,90,254,.3);
-  display:flex; align-items:center; justify-content:center; gap:8px;
-}
-.ask-btn:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(61,90,254,.4); }
-
-.ask-form-card {
-  background:var(--card); border:1.5px solid rgba(61,90,254,.25);
-  border-radius:var(--r-lg); padding:24px; margin-bottom:20px;
-  box-shadow:0 4px 24px rgba(61,90,254,.08); animation:slideDown .25s ease;
-}
-@keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
-.ask-form-card textarea,
-.ask-form-card select {
-  width:100%; padding:11px 14px;
-  border:1.5px solid var(--border); border-radius:10px;
-  font-family:var(--font-body); font-size:13.5px; color:var(--navy);
-  background:var(--card); transition:border .18s;
-}
-.ask-form-card textarea { resize:vertical; min-height:80px; }
-.ask-form-card textarea:focus,
-.ask-form-card select:focus { border-color:var(--blue); outline:none; box-shadow:0 0 0 3px rgba(61,90,254,.1); }
-
-.thread-card {
-  background:var(--card); border:1.5px solid var(--border);
-  border-radius:var(--r-lg); margin-bottom:14px;
-  overflow:hidden; transition:border .2s,box-shadow .2s; box-shadow:var(--shadow-sm);
-}
-.thread-card:hover { border-color:rgba(61,90,254,.3); box-shadow:var(--shadow-md); }
-.thread-head {
-  padding:18px 20px; cursor:pointer;
-  display:flex; align-items:flex-start; gap:14px;
-}
-.thread-ava {
-  width:36px; height:36px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display); font-size:14px; font-weight:700; color:#fff;
-}
-.thread-meta { flex:1; min-width:0; }
-.thread-question { font-size:14.5px; font-weight:700; color:var(--navy); line-height:1.4; margin-bottom:6px; }
-.thread-info { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.thread-info-item { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:4px; }
-.thread-badges { display:flex; gap:6px; margin-left:auto; flex-shrink:0; align-items:center; }
-.status-pill { font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; display:inline-flex; align-items:center; gap:4px; }
-.pill-answered { background:rgba(6,214,160,.12); color:#05b382; }
-.pill-ai-only  { background:rgba(61,90,254,.1);  color:var(--blue); }
-.pill-pending  { background:rgba(255,183,3,.12); color:#cc9200; }
-.expand-arrow  { font-size:14px; color:var(--muted); transition:transform .25s; flex-shrink:0; margin-top:2px; }
-.thread-card.open .expand-arrow { transform:rotate(180deg); }
-
-.thread-body { display:none; border-top:1px solid var(--border); }
-.thread-card.open .thread-body { display:block; }
-
-.answer-block { padding:18px 20px; border-bottom:1px solid var(--border); }
-.answer-block:last-child { border-bottom:none; }
-.answer-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.answer-source {
-  font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px;
-  display:inline-flex; align-items:center; gap:5px;
-}
-.source-ai       { background:linear-gradient(135deg,rgba(61,90,254,.12),rgba(124,77,255,.12)); color:var(--blue); border:1px solid rgba(61,90,254,.2); }
-.source-lecturer { background:rgba(0,191,166,.1); color:#009e8a; border:1px solid rgba(0,191,166,.2); }
-.answer-time { font-size:11.5px; color:var(--muted); margin-left:auto; }
-.answer-text { font-size:13.5px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
-
-.ai-typing { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--blue); padding:16px 20px; }
-.typing-dots span { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--blue); animation:dotBounce .9s infinite; }
-.typing-dots span:nth-child(2) { animation-delay:.2s; }
-.typing-dots span:nth-child(3) { animation-delay:.4s; }
-@keyframes dotBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
-
-.add-answer-bar {
-  padding:14px 20px; background:var(--surface);
-  display:flex; gap:10px; align-items:flex-end;
-  border-top:1px solid var(--border);
-}
-.add-answer-bar textarea {
-  flex:1; padding:10px 12px; border:1.5px solid var(--border);
-  border-radius:8px; font-family:var(--font-body); font-size:13.5px;
-  resize:none; min-height:42px; max-height:120px;
-  color:var(--navy); background:var(--card); transition:border .18s;
-}
-.add-answer-bar textarea:focus { border-color:var(--blue); outline:none; }
-.send-btn {
-  padding:10px 16px; background:var(--blue); color:#fff;
-  border:none; border-radius:8px; font-weight:700; font-size:13px;
-  cursor:pointer; transition:all .18s; white-space:nowrap; font-family:var(--font-body);
-}
-.send-btn:hover { background:var(--blue-soft); }
-.send-btn:disabled { opacity:.5; cursor:not-allowed; }
-
-.upvote-btn {
-  display:flex; align-items:center; gap:5px; padding:5px 10px;
-  border:1.5px solid var(--border); border-radius:99px;
-  font-size:12px; font-weight:600; color:var(--muted);
-  background:none; cursor:pointer; transition:all .15s; font-family:var(--font-body);
-}
-.upvote-btn:hover, .upvote-btn.voted { border-color:var(--red); color:var(--red); }
-
-.qa-empty { text-align:center; padding:60px 20px; color:var(--muted); }
-.qa-empty .icon { font-size:48px; margin-bottom:16px; opacity:.5; }
-.qa-empty h3 { font-size:16px; font-weight:700; color:var(--text2); margin-bottom:8px; }
-.qa-empty p  { font-size:13.5px; }
-
-.qa-search { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
-.qa-search input {
-  flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:var(--r-sm);
-  font-family:var(--font-body); font-size:13.5px; color:var(--navy);
-  background:var(--card); transition:border .18s;
-}
-.qa-search input:focus { border-color:var(--blue); outline:none; }
-.qa-sort select {
-  padding:9px 12px; border:1.5px solid var(--border); border-radius:var(--r-sm);
-  font-family:var(--font-body); font-size:13px; color:var(--text2);
-  background:var(--card); cursor:pointer;
-}
-
-@media(max-width:900px){ .qa-layout{grid-template-columns:1fr} .qa-sidebar{position:static} }
+  color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;
+  font-family:var(--font-b);cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 20px rgba(61,90,254,.35);
+  display:flex;align-items:center;justify-content:center;gap:10px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(61,90,254,.5)}
+.btn:disabled{opacity:.65;cursor:not-allowed;transform:none;box-shadow:none}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;
+  padding:13px 18px;border-radius:12px;font-size:13.5px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;
+  transition:all .35s cubic-bezier(.34,1.56,.64,1);z-index:9999}
+select.inp{padding-left:14px}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-<div class="sidebar">
-  <div class="sidebar-brand"><div class="brand-icon">🎓</div><div class="brand-text"><h2>SALA</h2><p>Adaptive Learning</p></div></div>
-  <div class="sidebar-user"><div class="user-ava" id="userAva">?</div><div class="user-info"><strong id="userName">Loading…</strong><span id="userRole">Student</span></div></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-label">Main Menu</div>
-    <div class="nav-item" onclick="nav('dashboard.html')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('subjects.html')"><span class="nav-icon">📚</span><span>My Subjects</span></div>
-    <div class="nav-item" onclick="nav('quiz.html')"><span class="nav-icon">🧠</span><span>Take a Quiz</span></div>
-    <div class="nav-item" onclick="nav('recommendations.html')"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
-    <div class="nav-item active"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
-    <div class="nav-item" onclick="nav('analytics.html')"><span class="nav-icon">📈</span><span>Analytics</span></div>
-  </nav>
-  <div class="sidebar-footer"><button class="logout-btn" onclick="window.handleLogout()"><span>🚪</span><span>Logout</span></button></div>
-</div>
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-name">SALA</div>
+    </div>
+    <span class="sign-in">Have an account? <a href="login.html">Sign in</a></span>
+  </div>
 
-<div class="topbar">
-  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-  <span class="topbar-title">Q&A Forum</span>
-  <span class="topbar-sub">/ Ask · Learn · Discuss</span>
-  <div class="topbar-spacer"></div>
-  <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode">
-    <i class="fa-solid fa-moon" id="darkToggleIcon"></i>
-  </button>
-  <button class="topbar-icon-btn">🔔<span class="notif-dot"></span></button>
-</div>
+  <div class="card">
+    <div class="card-title">Create your account</div>
+    <div class="card-sub">Join SALA and start your adaptive learning journey.</div>
 
-<div class="main-wrap">
-<div class="page-body">
-  <div class="qa-layout">
+    <div class="err-banner" id="errBanner">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span id="errMsg">Something went wrong.</span>
+    </div>
 
-    <!-- LEFT SIDEBAR -->
-    <aside class="qa-sidebar">
-      <button class="ask-btn" onclick="toggleAskForm()">
-        <i class="fa-solid fa-pen-to-square"></i> Ask a Question
-      </button>
+    <div class="badge">
+      <span style="font-size:22px">🎓</span>
+      <div>
+        <strong>Registering as Student</strong>
+        <span>Lecturers and admins are added by the Super Admin.</span>
+      </div>
+    </div>
 
-      <div class="card" style="padding:16px">
-        <div class="card-title" style="margin-bottom:12px">
-          <i class="fa-solid fa-filter"></i> Filter by Subject
+    <div class="row">
+      <div class="fg">
+        <label class="lbl">First Name <span style="color:var(--red)">*</span></label>
+        <div class="iw">
+          <i class="ii fa-solid fa-user"></i>
+          <input class="inp" type="text" id="firstName" placeholder="e.g. Ian" autocomplete="given-name"/>
         </div>
-        <select id="subjectFilterDropdown" onchange="setFilterFromDropdown(this.value)"
-                style="width:100%;padding:10px 12px;border:1.5px solid var(--border);
-                       border-radius:8px;font-family:var(--font-body);font-size:13.5px;
-                       color:var(--navy);background:var(--card);cursor:pointer;transition:border .18s">
-          <option value="all">🌐 All Subjects</option>
+        <div class="err" id="err-fn">First name is required</div>
+      </div>
+      <div class="fg">
+        <label class="lbl">Last Name <span style="color:var(--red)">*</span></label>
+        <div class="iw">
+          <i class="ii fa-solid fa-user"></i>
+          <input class="inp" type="text" id="lastName" placeholder="e.g. Muriithi" autocomplete="family-name"/>
+        </div>
+        <div class="err" id="err-ln">Last name is required</div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="lbl">Email Address <span style="color:var(--red)">*</span></label>
+      <div class="iw">
+        <i class="ii fa-regular fa-envelope"></i>
+        <input class="inp" type="email" id="email" placeholder="you@institution.ac.ke" autocomplete="email"/>
+      </div>
+      <div class="err" id="err-em">Please enter a valid email address</div>
+    </div>
+
+    <div class="fg">
+      <label class="lbl">Registration Number <span class="opt">(optional)</span></label>
+      <div class="iw">
+        <i class="ii fa-solid fa-id-card"></i>
+        <input class="inp" type="text" id="regNum" placeholder="e.g. CT101/G/17497/22"/>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="fg">
+        <label class="lbl">Programme <span class="opt">(optional)</span></label>
+        <select class="inp ni" id="programme">
+          <option value="cs">BSc. Computer Science</option>
+          <option value="bse">BSc. Software Engineering</option>
+          <option value="bbit">BSc. Business IT</option>
+          <option value="it">BSc. Information Technology</option>
         </select>
-        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="filterResultCount"></div>
       </div>
+      <div class="fg">
+        <label class="lbl">Year / Semester <span class="opt">(optional)</span></label>
+        <select class="inp ni" id="level">
+          <option value="y1s1">Year 1 – Semester 1</option>
+          <option value="y1s2">Year 1 – Semester 2</option>
+          <option value="y2s1">Year 2 – Semester 1</option>
+          <option value="y2s2">Year 2 – Semester 2</option>
+          <option value="y3s1">Year 3 – Semester 1</option>
+          <option value="y3s2">Year 3 – Semester 2</option>
+          <option value="y4s1">Year 4 – Semester 1</option>
+          <option value="y4s2">Year 4 – Semester 2</option>
+        </select>
+      </div>
+    </div>
 
-      <div class="card" style="padding:16px;margin-top:16px">
-        <div class="card-title" style="margin-bottom:10px">📊 Stats</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;font-size:13px">
-            <span style="color:var(--muted)">Total questions</span><strong id="statTotal">0</strong>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px">
-            <span style="color:var(--muted)">AI answered</span><strong id="statAI" style="color:var(--blue)">0</strong>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px">
-            <span style="color:var(--muted)">Lecturer answered</span><strong id="statLecturer" style="color:var(--teal)">0</strong>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px">
-            <span style="color:var(--muted)">Pending</span><strong id="statPending" style="color:var(--amber)">0</strong>
-          </div>
-        </div>
+    <div class="fg">
+      <label class="lbl">Password <span style="color:var(--red)">*</span></label>
+      <div class="iw">
+        <i class="ii fa-solid fa-lock"></i>
+        <input class="inp" type="password" id="password"
+          placeholder="Minimum 8 characters" autocomplete="new-password"
+          oninput="checkStrength(this.value)"/>
+        <button class="pw-btn" type="button" onclick="togglePw('password',this)">
+          <i class="fa-regular fa-eye-slash"></i>
+        </button>
       </div>
-    </aside>
+      <div class="pw-bars">
+        <div class="pw-bar" id="b1"></div><div class="pw-bar" id="b2"></div>
+        <div class="pw-bar" id="b3"></div><div class="pw-bar" id="b4"></div>
+      </div>
+      <div class="pw-hint" id="pwHint">Enter a password</div>
+    </div>
 
-    <!-- MAIN FEED -->
-    <main>
-      <!-- Ask form -->
-      <div id="askFormWrap" style="display:none">
-        <div class="ask-form-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--navy)">
-                ✍️ Ask a Question
-              </div>
-              <div style="font-size:12.5px;color:var(--muted);margin-top:3px">
-                SALA AI answers any question instantly — no subject filter. Your lecturer can follow up too.
-              </div>
-            </div>
-            <button onclick="toggleAskForm()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted)">✕</button>
-          </div>
-          <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:7px">
-              Topic / Subject <span style="color:var(--muted);font-weight:400;font-size:11.5px">(optional)</span>
-            </label>
-            <select id="askSubject"
-              style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;
-                     font-family:var(--font-body);font-size:13.5px;color:var(--text2);
-                     background:var(--card);cursor:pointer;transition:border .18s">
-              <option value="general">💬 General / Any Topic</option>
-              <option value="general" disabled>── Your Enrolled Subjects ──</option>
-            </select>
-            <div style="font-size:11.5px;color:var(--muted);margin-top:5px">
-              <i class="fa-solid fa-circle-info" style="color:var(--blue);margin-right:4px"></i>
-              SALA AI answers questions on <strong>any topic</strong> — not just your enrolled subjects.
-            </div>
-          </div>
-          <div style="margin-bottom:16px">
-            <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text2);margin-bottom:7px">
-              Your Question <span style="color:var(--red)">*</span>
-            </label>
-            <textarea id="askText"
-                      placeholder="Ask anything — algorithms, databases, networking, maths, business IT, ethics, or any other topic…"></textarea>
-            <div id="charCount" style="font-size:11.5px;color:var(--muted);margin-top:4px;text-align:right">
-              0 / 500 characters
-            </div>
-          </div>
-          <div style="display:flex;gap:10px">
-            <button onclick="submitQuestion()" id="askSubmitBtn"
-                    style="flex:1;padding:12px;background:linear-gradient(135deg,var(--blue),var(--blue-soft));
-                           color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;
-                           cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;
-                           justify-content:center;gap:8px">
-              <i class="fa-solid fa-paper-plane"></i> Submit &amp; Get AI Answer
-            </button>
-            <button onclick="toggleAskForm()"
-                    style="padding:12px 18px;border:1.5px solid var(--border);border-radius:10px;
-                           background:var(--card);font-size:13.5px;font-weight:600;cursor:pointer;
-                           color:var(--text2);font-family:var(--font-body)">
-              Cancel
-            </button>
-          </div>
-        </div>
+    <div class="fg">
+      <label class="lbl">Confirm Password <span style="color:var(--red)">*</span></label>
+      <div class="iw">
+        <i class="ii fa-solid fa-lock"></i>
+        <input class="inp" type="password" id="confirmPw"
+          placeholder="Re-enter your password" autocomplete="new-password"/>
+        <button class="pw-btn" type="button" onclick="togglePw('confirmPw',this)">
+          <i class="fa-regular fa-eye-slash"></i>
+        </button>
       </div>
+      <div class="err" id="err-pw">Passwords do not match or are too short (min 8)</div>
+    </div>
 
-      <!-- Search + sort -->
-      <div class="qa-search">
-        <input id="searchInput" placeholder="🔍  Search questions…" oninput="searchThreads()"/>
-        <div class="qa-sort">
-          <select id="sortSelect" onchange="sortThreads()">
-            <option value="newest">Newest first</option>
-            <option value="unanswered">Unanswered first</option>
-            <option value="upvotes">Most upvoted</option>
-          </select>
-        </div>
-      </div>
+    <button class="btn" id="submitBtn" onclick="doRegister()">
+      <i class="fa-solid fa-user-plus" id="btnIcon"></i>
+      <span id="btnText">Create My Account</span>
+    </button>
 
-      <!-- Thread list -->
-      <div id="threadList">
-        <div class="qa-empty">
-          <div class="icon">💬</div>
-          <h3>Loading questions…</h3>
-          <p>Fetching from the database.</p>
-        </div>
-      </div>
-    </main>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:14px">
+      By creating an account you agree to SALA's Terms of Service.
+    </p>
   </div>
 </div>
-</div>
 
-<div class="toast-container" id="toastContainer"></div>
+<div id="toast"></div>
 
 <script>
-// ── STATE ─────────────────────────────────────────────────────────────
-let currentUser      = null;
-let currentRole      = 'student';
-let enrolledSubjects = [];   // ✅ declared here — used in loadThreads
-let allThreads       = [];
-let filteredThreads  = [];
-let activeFilter     = 'all';
+// ── Firebase init ────────────────────────────────────────────────
+if (!firebase.apps.length) {
+  firebase.initializeApp({
+    apiKey:            "AIzaSyDBAVTtUoCz6bFA8MQS53NkjNih1lFtqx0",
+    authDomain:        "sala-d7d30.firebaseapp.com",
+    projectId:         "sala-d7d30",
+    storageBucket:     "sala-d7d30.firebasestorage.app",
+    messagingSenderId: "192793186155",
+    appId:             "1:192793186155:web:43575148b343da8f9f462e"
+  });
+}
 
-// ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const wait = setInterval(() => {
-    if (typeof firebase !== 'undefined' && firebase.apps.length &&
-        window.salaDB && window.PROGRAMME_CATALOG) {
-      clearInterval(wait);
-
-      firebase.auth().onAuthStateChanged(async (user) => {
-        if (!user) { window.location.href = 'login.html'; return; }
-
-        currentUser = user;
-        const doc   = await window.salaDB.collection('users').doc(user.uid).get();
-        if (!doc.exists) return;
-
-        const data       = doc.data();
-        currentRole      = data.role || 'student';
-        enrolledSubjects = data.enrolledSubjects || [];
-
-        buildSubjectFilters(data);
-        loadThreads();
-
-        document.getElementById('askText').addEventListener('input', function() {
-          const len = this.value.length;
-          const el  = document.getElementById('charCount');
-          el.textContent = `${len} / 500 characters`;
-          el.style.color = len > 450 ? 'var(--red)' : 'var(--muted)';
-          if (len > 500) this.value = this.value.slice(0, 500);
-        });
-      });
-    }
-  }, 80);
-  setTimeout(() => clearInterval(wait), 8000);
+// ── Redirect already logged-in users ────────────────────────────
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) window.location.href = 'dashboard.html';
 });
 
-// ── SUBJECT FILTERS ───────────────────────────────────────────────────
-function buildSubjectFilters(userData) {
-  const dropdown = document.getElementById('subjectFilterDropdown');
-  const askSel   = document.getElementById('askSubject');
-  const subjects = [];
+// ── Password strength ────────────────────────────────────────────
+function checkStrength(pw) {
+  var bars = [1,2,3,4].map(function(i){ return document.getElementById('b'+i); });
+  var hint = document.getElementById('pwHint');
+  bars.forEach(function(b){ b.className = 'pw-bar'; });
+  if (!pw) { hint.textContent = 'Enter a password'; hint.style.color = 'var(--muted)'; return; }
+  var score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  var cls    = ['weak','ok','ok','good'];
+  var labels = ['Too short','Fair — add numbers','Good — add symbols','Strong ✓'];
+  for (var i = 0; i < score; i++) bars[i].classList.add(cls[i]);
+  hint.textContent = labels[Math.max(0, score - 1)];
+  hint.style.color = score <= 1 ? 'var(--red)' : score <= 2 ? 'var(--amber)' : 'var(--green)';
+}
 
-  // Always build a full subject list regardless of role or enrolment —
-  // the AI has no topic filter so students can ask about anything.
-  const seen = new Set();
-  Object.values(window.PROGRAMME_CATALOG).forEach(prog =>
-    Object.values(prog.levels).forEach(lvl =>
-      lvl.subjects.forEach(s => {
-        if (!seen.has(s.id)) { seen.add(s.id); subjects.push(s); }
-      })
-    )
-  );
+function togglePw(id, btn) {
+  var inp = document.getElementById(id);
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<i class="fa-regular fa-eye"></i>'
+    : '<i class="fa-regular fa-eye-slash"></i>';
+}
 
-  // Sidebar filter dropdown (all subjects)
-  subjects.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s.id;
-    o.textContent = `${s.icon} ${s.name}`;
-    dropdown.appendChild(o);
+// ── Register ─────────────────────────────────────────────────────
+function doRegister() {
+  // Clear errors
+  ['err-fn','err-ln','err-em','err-pw'].forEach(function(id){
+    document.getElementById(id).classList.remove('show');
   });
+  document.getElementById('errBanner').classList.remove('show');
 
-  // Ask form dropdown — group enrolled vs other for convenience
-  // "General / Any Topic" is already the first option in HTML
-  if (enrolledSubjects.length > 0) {
-    const enrolledGroup = document.createElement('optgroup');
-    enrolledGroup.label = '📚 Your Enrolled Subjects';
-    enrolledSubjects.forEach(id => {
-      const s = subjects.find(x => x.id === id);
-      if (s) {
-        const o = document.createElement('option');
-        o.value = s.id;
-        o.textContent = `${s.icon} ${s.name}`;
-        enrolledGroup.appendChild(o);
-      }
+  var firstName = document.getElementById('firstName').value.trim();
+  var lastName  = document.getElementById('lastName').value.trim();
+  var email     = document.getElementById('email').value.trim();
+  var regNum    = document.getElementById('regNum').value.trim();
+  var programme = document.getElementById('programme').value || 'cs';
+  var level     = document.getElementById('level').value || 'y1s1';
+  var password  = document.getElementById('password').value;
+  var confirmPw = document.getElementById('confirmPw').value;
+
+  // Validate
+  var valid = true;
+  if (!firstName) { document.getElementById('err-fn').classList.add('show'); valid = false; }
+  if (!lastName)  { document.getElementById('err-ln').classList.add('show'); valid = false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('err-em').classList.add('show'); valid = false;
+  }
+  if (!password || password.length < 8 || password !== confirmPw) {
+    document.getElementById('err-pw').classList.add('show'); valid = false;
+  }
+  if (!valid) return;
+
+  // Show loading
+  var btn  = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Creating account…</span>';
+
+  // Step 1: Create Auth account
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then(function(cred) {
+      var uid = cred.user.uid;
+      // Step 2: Save Firestore profile
+      return firebase.firestore().collection('users').doc(uid).set({
+        name:             firstName + ' ' + lastName,
+        email:            email,
+        role:             'student',
+        regNumber:        regNum,
+        programme:        programme,
+        level:            level,
+        enrolledSubjects: [],
+        bkt_profile:      {},
+        streakCount:      0,
+        createdAt:        firebase.firestore.FieldValue.serverTimestamp()
+      });
+    })
+    .then(function() {
+      // Success
+      btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>Account created!</span>';
+      btn.style.background = 'linear-gradient(135deg,#06d6a0,#04b87e)';
+      showToast('Welcome to SALA! Taking you to your dashboard…');
+      setTimeout(function(){ window.location.href = 'dashboard.html'; }, 1500);
+    })
+    .catch(function(err) {
+      console.error('Register error:', err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> <span>Create My Account</span>';
+      btn.style.background = '';
+
+      var msg = 'Registration failed. Please try again.';
+      if (err.code === 'auth/email-already-in-use')
+        msg = 'That email is already registered. Try signing in instead.';
+      else if (err.code === 'auth/invalid-email')
+        msg = 'Please enter a valid email address.';
+      else if (err.code === 'auth/weak-password')
+        msg = 'Password must be at least 6 characters.';
+      else if (err.code === 'auth/network-request-failed')
+        msg = 'Network error. Check your connection and try again.';
+
+      document.getElementById('errMsg').textContent = msg;
+      document.getElementById('errBanner').classList.add('show');
     });
-    if (enrolledGroup.children.length) askSel.appendChild(enrolledGroup);
+}
+
+// Enter key submits
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !document.getElementById('submitBtn').disabled) {
+    doRegister();
   }
+});
 
-  // All other subjects grouped separately
-  const otherGroup = document.createElement('optgroup');
-  otherGroup.label = '🌐 All Other Subjects';
-  subjects.forEach(s => {
-    if (!enrolledSubjects.includes(s.id)) {
-      const o = document.createElement('option');
-      o.value = s.id;
-      o.textContent = `${s.icon} ${s.name}`;
-      otherGroup.appendChild(o);
-    }
-  });
-  if (otherGroup.children.length) askSel.appendChild(otherGroup);
-
-  const subParam = new URLSearchParams(window.location.search).get('subject');
-  if (subParam) {
-    dropdown.value = subParam;
-    activeFilter   = subParam;
-    askSel.value   = subParam;
-  }
-}
-
-function setFilterFromDropdown(value) {
-  activeFilter = value || 'all';
-  applyFilterAndSort();
-}
-
-// ── LOAD THREADS ──────────────────────────────────────────────────────
-async function loadThreads() {
-  const db = window.salaDB;
-  try {
-    // No orderBy → no composite index required; sorted client-side below
-    let query = db.collection('qa_threads').limit(100);
-
-    // ✅ Fixed: was `enrolledIds` (undefined) — now correctly uses `enrolledSubjects`
-    if (currentRole !== 'admin' && currentRole !== 'lecturer' && enrolledSubjects.length > 0) {
-      query = query.where('subject', 'in', enrolledSubjects.slice(0, 10));
-    }
-
-    const snap = await query.get();
-    allThreads = [];
-
-    snap.forEach(doc => {
-      const d = doc.data();
-      allThreads.push({ id: doc.id, ...d, _ts: d.createdAt?.toDate?.()?.getTime() || 0 });
-    });
-
-    allThreads.sort((a, b) => b._ts - a._ts);
-
-    updateStats();
-    applyFilterAndSort();
-
-  } catch(e) {
-    console.error('Load threads error:', e);
-    document.getElementById('threadList').innerHTML = `
-      <div class="qa-empty">
-        <div class="icon">⚠️</div>
-        <h3>Failed to load questions</h3>
-        <p>Check your connection and refresh the page.</p>
-      </div>`;
-  }
-}
-
-function updateStats() {
-  document.getElementById('statTotal').textContent    = allThreads.length;
-  document.getElementById('statAI').textContent       = allThreads.filter(t => t.aiAnswer).length;
-  document.getElementById('statLecturer').textContent = allThreads.filter(t => t.lecturerAnswer).length;
-  document.getElementById('statPending').textContent  = allThreads.filter(t => !t.aiAnswer && !t.lecturerAnswer).length;
-}
-
-// ── FILTER / SORT / SEARCH ────────────────────────────────────────────
-function applyFilterAndSort() {
-  const search = document.getElementById('searchInput').value.toLowerCase().trim();
-
-  filteredThreads = allThreads.filter(t => {
-    if (activeFilter !== 'all' && t.subject !== activeFilter) return false;
-    if (search && !t.question.toLowerCase().includes(search)) return false;
-    return true;
-  });
-
-  const countEl = document.getElementById('filterResultCount');
-  if (countEl) {
-    countEl.textContent = activeFilter === 'all'
-      ? `${filteredThreads.length} question${filteredThreads.length !== 1 ? 's' : ''} total`
-      : `${filteredThreads.length} question${filteredThreads.length !== 1 ? 's' : ''} in this subject`;
-  }
-
-  sortThreads();
-}
-
-function sortThreads() {
-  const sort = document.getElementById('sortSelect').value;
-  filteredThreads.sort((a, b) => {
-    if (sort === 'newest')  return b._ts - a._ts;
-    if (sort === 'upvotes') return (b.upvotes || 0) - (a.upvotes || 0);
-    if (sort === 'unanswered') {
-      const aA = !!(a.aiAnswer || a.lecturerAnswer);
-      const bA = !!(b.aiAnswer || b.lecturerAnswer);
-      if (!aA && bA) return -1;
-      if (aA && !bA) return 1;
-      return b._ts - a._ts;
-    }
-    return 0;
-  });
-  renderThreads();
-}
-
-function searchThreads() { applyFilterAndSort(); }
-
-// ── RENDER THREADS ────────────────────────────────────────────────────
-function renderThreads() {
-  const container = document.getElementById('threadList');
-  if (!filteredThreads.length) {
-    container.innerHTML = `
-      <div class="qa-empty">
-        <div class="icon">🔍</div>
-        <h3>No questions yet</h3>
-        <p>${activeFilter !== 'all'
-          ? 'Be the first to ask a question in this subject!'
-          : 'Click "Ask a Question" to get started.'}</p>
-      </div>`;
-    return;
-  }
-  container.innerHTML = filteredThreads.map(t => threadCardHTML(t)).join('');
-}
-
-function getSubjectInfo(id) {
-  if (!window.PROGRAMME_CATALOG) return { name: id.toUpperCase(), icon: '📚' };
-  for (const prog of Object.values(window.PROGRAMME_CATALOG))
-    for (const lvl of Object.values(prog.levels)) {
-      const s = lvl.subjects.find(x => x.id === id);
-      if (s) return s;
-    }
-  return { name: id.toUpperCase(), icon: '📚' };
-}
-
-function threadCardHTML(t) {
-  const subj     = getSubjectInfo(t.subject);
-  const when     = timeAgo(t._ts);
-  const initial  = (t.askedByName || '?').charAt(0).toUpperCase();
-  const avaColor = avatarColor(t.askedByName || '');
-  const isStaff  = currentRole === 'admin' || currentRole === 'lecturer';
-  const isOwner  = t.askedBy === currentUser?.uid;
-
-  let statusPill = '';
-  if (t.lecturerAnswer) statusPill = '<span class="status-pill pill-answered">✅ Answered</span>';
-  else if (t.aiAnswer)  statusPill = '<span class="status-pill pill-ai-only">🤖 AI Answered</span>';
-  else                  statusPill = '<span class="status-pill pill-pending">⏳ Pending</span>';
-
-  const upvoted     = (t.upvotedBy || []).includes(currentUser?.uid);
-  const upvoteClass = upvoted ? 'upvote-btn voted' : 'upvote-btn';
-
-  return `
-    <div class="thread-card" id="thread-${t.id}">
-      <div class="thread-head" onclick="toggleThread('${t.id}')">
-        <div class="thread-ava" style="background:${avaColor}">${initial}</div>
-        <div class="thread-meta">
-          <div class="thread-question">${escapeHtml(t.question)}</div>
-          <div class="thread-info">
-            <span class="thread-info-item">${subj.icon} ${subj.name}</span>
-            <span class="thread-info-item">
-              <i class="fa-regular fa-user"></i>
-              ${escapeHtml(t.askedByName || 'Anonymous')}
-              ${t.askedByRole === 'lecturer'
-                ? '<span style="font-size:10px;font-weight:700;color:var(--teal);background:rgba(0,191,166,.1);padding:1px 6px;border-radius:3px;margin-left:4px">LECTURER</span>'
-                : ''}
-            </span>
-            <span class="thread-info-item"><i class="fa-regular fa-clock"></i> ${when}</span>
-          </div>
-        </div>
-        <div class="thread-badges">
-          ${statusPill}
-          <button class="${upvoteClass}" onclick="upvoteThread(event,'${t.id}')">
-            ❤️ ${t.upvotes || 0}
-          </button>
-        </div>
-        <i class="fa-solid fa-chevron-down expand-arrow"></i>
-      </div>
-
-      <div class="thread-body">
-
-        <!-- ✅ AI answer — visible to EVERYONE (students + staff) -->
-        ${t.aiAnswer ? `
-          <div class="answer-block">
-            <div class="answer-header">
-              <span class="answer-source source-ai">
-                <i class="fa-solid fa-robot"></i> Claude AI
-              </span>
-              <span class="answer-time">${t.aiAnsweredAt ? timeAgo(t.aiAnsweredAt.toDate?.()?.getTime?.() || 0) : ''}</span>
-            </div>
-            <div class="answer-text">${escapeHtml(t.aiAnswer)}</div>
-          </div>
-        ` : `
-          <div class="ai-typing" id="typing-${t.id}" style="display:none">
-            <i class="fa-solid fa-robot" style="color:var(--blue)"></i>
-            <span>Claude AI is thinking…</span>
-            <div class="typing-dots"><span></span><span></span><span></span></div>
-          </div>
-        `}
-
-        <!-- ✅ Lecturer answer — visible to EVERYONE once posted -->
-        ${t.lecturerAnswer ? `
-          <div class="answer-block">
-            <div class="answer-header">
-              <span class="answer-source source-lecturer">
-                <i class="fa-solid fa-chalkboard-teacher"></i> Lecturer
-              </span>
-              <strong style="font-size:12.5px;color:var(--navy)">${escapeHtml(t.lecturerName || 'Lecturer')}</strong>
-              <span class="answer-time">${t.lecturerAnsweredAt ? timeAgo(t.lecturerAnsweredAt.toDate?.()?.getTime?.() || 0) : ''}</span>
-            </div>
-            <div class="answer-text">${escapeHtml(t.lecturerAnswer)}</div>
-          </div>
-        ` : ''}
-
-        <!-- ✅ Reply textarea — ONLY shown to admin/lecturer, NEVER to students -->
-        ${isStaff ? `
-          <div class="add-answer-bar">
-            <textarea id="reply-${t.id}"
-                      placeholder="Add your expert response as a lecturer…"
-                      rows="2"></textarea>
-            <button class="send-btn" onclick="submitLecturerAnswer('${t.id}')">
-              <i class="fa-solid fa-paper-plane"></i> Reply
-            </button>
-          </div>
-        ` : ''}
-
-        <!-- Delete button — owner or staff only -->
-        ${(isOwner || isStaff) ? `
-          <div style="padding:8px 20px;display:flex;justify-content:flex-end">
-            <button onclick="deleteThread('${t.id}')"
-                    style="font-size:12px;color:var(--muted);background:none;border:none;
-                           cursor:pointer;font-family:var(--font-body)">
-              <i class="fa-solid fa-trash"></i> Delete
-            </button>
-          </div>
-        ` : ''}
-
-      </div>
-    </div>`;
-}
-
-function toggleThread(id) {
-  document.getElementById(`thread-${id}`)?.classList.toggle('open');
-}
-
-// ── ASK FORM ──────────────────────────────────────────────────────────
-function toggleAskForm() {
-  const wrap = document.getElementById('askFormWrap');
-  const open = wrap.style.display === 'none';
-  wrap.style.display = open ? 'block' : 'none';
-  if (open) {
-    wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    document.getElementById('askText').focus();
-  }
-}
-
-async function submitQuestion() {
-  // Subject is now optional — default to 'general' if nothing selected
-  const subjectRaw = document.getElementById('askSubject').value || 'general';
-  const subject    = subjectRaw || 'general';
-  const question   = document.getElementById('askText').value.trim();
-
-  if (!question)            { showToast('⚠️ Please write your question.', true); return; }
-  if (question.length < 10) { showToast('⚠️ Question is too short — add more detail.', true); return; }
-
-  const btn = document.getElementById('askSubmitBtn');
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
-  btn.disabled  = true;
-
-  try {
-    // Get subject display name for context (may be 'General' for open questions)
-    const subjInfo = subject === 'general'
-      ? { name: 'General', icon: '💬' }
-      : getSubjectInfo(subject);
-
-    // 1. Save to Firestore immediately so it appears in the feed
-    const docRef = await window.salaDB.collection('qa_threads').add({
-      subject,
-      subjectLabel:   subjInfo.name || subject,
-      question,
-      askedBy:        currentUser.uid,
-      askedByName:    window._cachedUserData?.name || currentUser.displayName || 'Student',
-      askedByRole:    currentRole,
-      aiAnswer:       null,
-      lecturerAnswer: null,
-      upvotes:        0,
-      upvotedBy:      [],
-      status:         'pending',
-      createdAt:      firebase.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // 2. Reset form and reload list
-    toggleAskForm();
-    document.getElementById('askText').value         = '';
-    document.getElementById('askSubject').value      = 'general';
-    document.getElementById('charCount').textContent = '0 / 500 characters';
-    showToast('✅ Question posted! SALA AI is thinking…');
-    await loadThreads();
-
-    // 3. Show typing animation on the new thread
-    const card = document.getElementById(`thread-${docRef.id}`);
-    if (card) {
-      card.classList.add('open');
-      const typingEl = document.getElementById(`typing-${docRef.id}`);
-      if (typingEl) typingEl.style.display = 'flex';
-      card.scrollIntoView({ behavior:'smooth', block:'center' });
-    }
-
-    // 4. Call SALA AI — passes subject as context only, not a filter
-    const aiAnswer = await getAIAnswer(question, subject, subjInfo.name);
-
-    // 5. Save AI answer
-    await window.salaDB.collection('qa_threads').doc(docRef.id).update({
-      aiAnswer:     aiAnswer,
-      aiAnsweredAt: firebase.firestore.FieldValue.serverTimestamp(),
-      status:       'ai_only',
-    });
-
-    // 6. Reload and open thread to show the answer
-    await loadThreads();
-    const updated = document.getElementById(`thread-${docRef.id}`);
-    if (updated) updated.classList.add('open');
-
-  } catch(e) {
-    console.error('Submit question error:', e);
-    showToast('❌ Failed to post question. Try again.', true);
-  } finally {
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit &amp; Get AI Answer';
-    btn.disabled  = false;
-  }
-}
-
-// ── SALA AI — powered by Groq, fully open, no topic filters ─────────
-async function getAIAnswer(question, subjectId, subjectName) {
-  try {
-    const GROQ_KEY = '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';
-
-    // Use subject name as gentle context — never as a restriction
-    const contextNote = (subjectName && subjectName !== 'General' && subjectName !== subjectId)
-      ? `The student tagged this question under "${subjectName}".`
-      : 'The student did not specify a subject — answer based on the question alone.';
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${GROQ_KEY}`,
-      },
-      body: JSON.stringify({
-        model:       'llama-3.3-70b-versatile',
-        max_tokens:  1200,
-        temperature: 0.5,
-        messages: [
-          {
-            role: 'system',
-            content: `You are SALA AI — a knowledgeable, patient, and encouraging university teaching assistant
-built into the SALA Adaptive Learning platform at a Kenyan university.
-
-You assist students from ALL degree programmes: Computer Science, Software Engineering,
-Information Technology, Business IT, Cybersecurity, Data Science, and any other course.
-You have NO topic restrictions whatsoever. You answer questions on any academic subject.
-
-${contextNote}
-
-HOW TO ANSWER:
-- Give a clear, accurate, well-explained answer regardless of the topic.
-- Write in plain flowing paragraphs — do NOT use markdown headers, bullet points, or bold text
-  since the answer is displayed as plain text in the forum.
-- Aim for 120 to 400 words — thorough but not overwhelming.
-- Use simple language first, then go deeper if the question is advanced.
-- If the question involves code or a formula, write it inline in plain text.
-- If you are genuinely unsure of something, say so and suggest the student verify with their lecturer.
-- Never refuse a legitimate academic question.
-- End every response with exactly one short, warm, encouraging sentence on its own line.`
-          },
-          {
-            role: 'user',
-            content: question
-          }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      console.error('Groq API error:', err);
-      // Return a graceful fallback instead of crashing
-      return `SALA AI is temporarily unavailable (${response.status}). Your lecturer will see this question and respond soon.`;
-    }
-
-    const data   = await response.json();
-    const answer = data.choices?.[0]?.message?.content?.trim();
-    return answer || 'SALA AI could not generate a response. Please try again or ask your lecturer.';
-
-  } catch(e) {
-    console.error('SALA AI error:', e);
-    return 'SALA AI encountered a network error. Check your connection and try again, or wait for your lecturer to respond.';
-  }
-}
-// ── DELETE ────────────────────────────────────────────────────────────
-async function deleteThread(threadId) {
-  if (!confirm('Delete this question and all its answers?')) return;
-  try {
-    await window.salaDB.collection('qa_threads').doc(threadId).delete();
-    showToast('🗑️ Question deleted.');
-    await loadThreads();
-  } catch(e) {
-    showToast('❌ Could not delete.', true);
-  }
-}
-
-// ── UTILITIES ─────────────────────────────────────────────────────────
-function avatarColor(name) {
-  const c = ['#3d5afe','#00bfa6','#ffb703','#ff4d6d','#7c4dff','#06d6a0'];
-  return c[(name?.length || 0) % c.length];
-}
-
-function timeAgo(ts) {
-  if (!ts) return '';
-  const d = Math.floor((Date.now() - ts) / 1000);
-  if (d < 60)    return 'Just now';
-  if (d < 3600)  return `${Math.floor(d/60)}m ago`;
-  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
-  return `${Math.floor(d/86400)}d ago`;
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
-
-function showToast(msg, isError = false) {
-  const c = document.getElementById('toastContainer');
-  const t = document.createElement('div');
-  t.className        = 'toast';
-  t.style.background = isError ? 'var(--red)' : 'var(--navy)';
-  t.innerHTML        = `<span>${msg}</span>`;
-  c.appendChild(t);
-  setTimeout(() => t.classList.add('show'), 10);
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateY(0)';
+  t.style.opacity = '1';
+  setTimeout(function(){ t.style.transform = 'translateY(80px)'; t.style.opacity = '0'; }, 4000);
 }
 </script>
 </body>
