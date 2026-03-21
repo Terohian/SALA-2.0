@@ -496,21 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Do NOT call it here with user.displayName (always null for email auth)
 
     } else {
-      // Wait briefly — Firebase Auth state can take up to 500ms to settle after
-      // a page redirect. Pages with their own auth guards (admin, superadmin)
-      // handle their own redirects, so we only redirect from unguarded pages.
-      const path = window.location.pathname;
-      const hasOwnGuard = path.includes('admin.html') || 
-                          path.includes('superadmin.html');
-      if (!path.includes('login.html') && !path.includes('register.html') && !hasOwnGuard) {
-        // Small delay so a fresh page load after login doesn't fire prematurely
-        setTimeout(() => {
-          // Re-check — user may have resolved by now
-          if (!firebase.auth().currentUser) {
-            window.location.href = 'login.html';
-          }
-        }, 800);
-      }
+      // Auth state null — may still be settling from IndexedDB.
+      // Do NOT redirect from here. Each page has its own auth guard that
+      // handles unauthenticated users after a longer, page-specific timeout.
     }
   });
 
