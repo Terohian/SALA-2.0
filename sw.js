@@ -1,6 +1,6 @@
 // ── Bump this version string every time you deploy changes ──────────────
 // The activate handler will automatically delete all older caches
-const VERSION    = 'sala-v13';
+const VERSION    = 'sala-v14';
 const CACHE_NAME = `${VERSION}-static`;
 
 // ── These files are safe to cache aggressively (CDN assets, fonts) ──────
