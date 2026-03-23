@@ -204,7 +204,7 @@ function getEnrolledSubjects(programme, level) {
 
 const usersToSeed = [
 
-  // ── Staff ──────────────────────────────────────────────────────────────
+  // Staff
   {
     name:       'Dr. Ephantus Mwangi',
     email:      'ephantus@sala.ac.ke',
@@ -224,7 +224,7 @@ const usersToSeed = [
     level:      null,
   },
 
-  // ── BSc. Computer Science ──────────────────────────────────────────────
+  //BSc. Computer Science
   {
     name:       'Ian Muriithi',
     email:      'ian.muriithi@sala.ac.ke',
@@ -262,7 +262,7 @@ const usersToSeed = [
     level:      'y4s2',
   },
 
-  // ── BSc. Software Engineering ──────────────────────────────────────────
+  // BSc. Software Engineering 
   {
     name:       'Brian Kiptonui',
     email:      'brian.kiptonui@sala.ac.ke',
@@ -291,7 +291,7 @@ const usersToSeed = [
     level:      'y3s2',
   },
 
-  // ── BSc. Business Information Technology ──────────────────────────────
+  // BSc. Business Information Technology 
   {
     name:       'Joyce Wanjiku',
     email:      'joyce.wanjiku@sala.ac.ke',
@@ -320,7 +320,7 @@ const usersToSeed = [
     level:      'y1s2',
   },
 
-  // ── BSc. Information Technology ────────────────────────────────────────
+  // BSc. Information Technology 
   {
     name:       'Collins Otieno',
     email:      'collins.otieno@sala.ac.ke',
