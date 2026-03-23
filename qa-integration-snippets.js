@@ -1,13 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════
-// FILE 1: subjects.html — add this button to the enrolled card actions
-// Replace the existing bodyHTML enrolled actions block with this:
-// ═══════════════════════════════════════════════════════════════════
-
-/*
-In subjects.html loadLiveSubjects(), find the enrolled bodyHTML 
-and replace the card-actions div with:
-*/
-
 const bodyHTML_enrolled = `
   <div class="subject-meta">Enrolled · ${levelLabel}</div>
   <div class="progress-container">
@@ -33,22 +23,12 @@ const bodyHTML_enrolled = `
   </div>
 `;
 
-
-// ═══════════════════════════════════════════════════════════════════
-// FILE 2: admin.html — add a Q&A tab
-// Add this tab button to the .tabs div:
-// ═══════════════════════════════════════════════════════════════════
-
 const qaTabButton = `
 <button class="tab-btn" id="tabBtnQA" onclick="switchTab('tab-qa',this)">
   <i class="fa-solid fa-comments"></i> Q&A
   <span class="tab-badge" id="pendingQABadge" style="display:none">0</span>
 </button>
 `;
-
-// ═══════════════════════════════════════════════════════════════════
-// FILE 2 cont: admin.html — add this full tab pane after tab-resources
-// ═══════════════════════════════════════════════════════════════════
 
 const qaTabPane = `
 <div id="tab-qa" class="tab-pane">
@@ -79,10 +59,6 @@ const qaTabPane = `
 </div>
 `;
 
-
-// ═══════════════════════════════════════════════════════════════════
-// FILE 2 cont: admin.html — add these functions to the <script> block
-// ═══════════════════════════════════════════════════════════════════
 
 function qaAdminScripts() { return `
 
