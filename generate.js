@@ -2,20 +2,20 @@ require('dotenv').config();
 const admin = require('firebase-admin');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// ── FIREBASE SETUP ────────────────────────────────────────────────────────
+// ── FIREBASE SETUP
 const serviceAccount = require('./models/serviceAccountKey.json');
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 const db = admin.firestore();
 
-// ── AI SETUP ──────────────────────────────────────────────────────────────
+// ── AI SETUP 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-// ── COMPLETE SUBJECT LIST — matches PROGRAMME_CATALOG exactly ─────────────
+// ── COMPLETE SUBJECT LIST — matches PROGRAMME_CATALOG exactly 
 // Shared subjects (same question pool used across multiple programmes)
 const targetSubjects = [
 
-  // ── Year 1 ──────────────────────────────────────────────────────────────
+  // ── Year 1 
   { name: 'Introduction to Computing',          code: 'intro',        level: 'y1s1', year: 1 },
   { name: 'Discrete Mathematics',               code: 'discmath',     level: 'y1s1', year: 1 },
   { name: 'Logic and Critical Thinking',        code: 'logic',        level: 'y1s1', year: 1 },
@@ -31,7 +31,7 @@ const targetSubjects = [
   { name: 'Requirements Engineering',           code: 'require',      level: 'y1s2', year: 1 },
   { name: 'E-Commerce Systems',                 code: 'ecommerce',    level: 'y1s2', year: 1 },
 
-  // ── Year 2 ──────────────────────────────────────────────────────────────
+  // ── Year 2 
   { name: 'Algorithms and Complexity',          code: 'algo',         level: 'y2s1', year: 2 },
   { name: 'Database Systems',                   code: 'db',           level: 'y2s1', year: 2 },
   { name: 'Statistics for Computing',           code: 'stats',        level: 'y2s1', year: 2 },
@@ -47,7 +47,7 @@ const targetSubjects = [
   { name: 'IT Project Management',              code: 'it_proj_mgmt', level: 'y2s2', year: 2 },
   { name: 'Systems Administration',             code: 'sys_admin',    level: 'y2s2', year: 2 },
 
-  // ── Year 3 ──────────────────────────────────────────────────────────────
+  // ── Year 3 
   { name: 'Cyber Security',                     code: 'cybersec',     level: 'y3s1', year: 3 },
   { name: 'Artificial Intelligence',            code: 'ai',           level: 'y3s1', year: 3 },
   { name: 'Mobile Application Development',     code: 'mobile',       level: 'y3s1', year: 3 },
@@ -63,7 +63,7 @@ const targetSubjects = [
   { name: 'IT Governance and Compliance',       code: 'it_gov',       level: 'y3s2', year: 3 },
   { name: 'Digital Marketing and IT',           code: 'digital_mkt',  level: 'y3s2', year: 3 },
 
-  // ── Year 4 ──────────────────────────────────────────────────────────────
+  // ── Year 4
   { name: 'Artificial Neural Networks',         code: 'ann',          level: 'y4s1', year: 4 },
   { name: 'ICT and Society',                    code: 'ict',          level: 'y4s1', year: 4 },
   { name: 'Distributed Systems',                code: 'dist',         level: 'y4s1', year: 4 },
@@ -74,7 +74,7 @@ const targetSubjects = [
   { name: 'Research Methods for Computing',     code: 'research',     level: 'y4s2', year: 4 },
 ];
 
-// ── HELPERS ───────────────────────────────────────────────────────────────
+// ── HELPERS 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // Check if questions already exist for a subject code to allow safe re-runs
@@ -86,7 +86,7 @@ async function subjectAlreadyHasQuestions(code) {
   return !snap.empty;
 }
 
-// ── GENERATE WITH RETRY ───────────────────────────────────────────────────
+
 async function generateWithRetry(subject, attempts = 3) {
   const yearLabel = `Year ${subject.year}`;
   const prompt = `
@@ -154,7 +154,7 @@ Use this exact JSON structure for every question:
   return null; // All attempts failed
 }
 
-// ── MAIN ──────────────────────────────────────────────────────────────────
+// ── MAIN 
 async function generateAndUpload() {
   console.log(`🚀 Starting generation for ${targetSubjects.length} subjects...\n`);
 
@@ -223,7 +223,7 @@ async function generateAndUpload() {
     }
   }
 
-  // ── SUMMARY ───────────────────────────────────────────────────────
+  // ── SUMMARY 
   console.log('\n═══════════════════════════════════════');
   console.log(`🎉 Generation complete!`);
   console.log(`   ✅ Uploaded : ${totalUploaded} questions`);
