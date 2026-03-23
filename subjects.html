@@ -12,7 +12,6 @@
     <script src="sala-app.js" defer></script>
 <script src="sala-darkmode.js" defer></script>
     <style>
-        /* ALL YOUR BEAUTIFUL CSS KEPT EXACTLY AS IS */
         .subject-header { background: linear-gradient(135deg, var(--navy), var(--navy-mid)); color: white; padding: 32px; border-radius: 20px; margin-bottom: 32px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 21, 53, 0.15); }
         .subject-grid {
         display: flex;
@@ -70,7 +69,6 @@
         .progress-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
         .card-actions { display: flex; gap: 10px; margin-top: 20px; }
         
-        /* Modal Styles */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 21, 53, 0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease-out; }
         .modal-box { background: var(--card); width: 90%; max-width: 500px; max-height: 85vh; border-radius: 20px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: slideUp 0.3s ease-out; }
@@ -183,13 +181,13 @@
         return;
       }
 
-      // ✅ Declare userData FIRST before using any of its properties
+      // Declare userData FIRST before using any of its properties
       const userData = doc.data();
       const enrolledSubjects = userData.enrolledSubjects || [];
       const userProgramme = userData.programme || 'cs';
       const userLevel = userData.level || 'y1s1';
 
-      // ✅ Use PROGRAMME_CATALOG helpers — no more hardcoded array
+      //Use PROGRAMME_CATALOG helpers — no more hardcoded array
       const subjects = window.getProgrammeSubjects(userProgramme, userLevel);
       const levelLabel = window.getLevelLabel(userProgramme, userLevel);
       const progLabel  = window.getProgrammeLabel(userProgramme);
@@ -203,7 +201,7 @@
         return;
       }
 
-      // ✅ Store in module-level variable so openModal() can use it
+      // Store in module-level variable so openModal() can use it
       currentPageSubjects = subjects;
 
       // Sort: enrolled first, unenrolled second — both within the student's level only
