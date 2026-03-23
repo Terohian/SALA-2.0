@@ -1,10 +1,6 @@
-// ── Bump this version string every time you deploy changes ──────────────
-// The activate handler will automatically delete all older caches
-const VERSION    = 'sala-v17';
+const VERSION    = 'sala-v18';
 const CACHE_NAME = `${VERSION}-static`;
 
-// ── These files are safe to cache aggressively (CDN assets, fonts) ──────
-// They have their own versioning in the URL so they never go stale
 const CDN_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
@@ -14,7 +10,7 @@ const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css',
 ];
 
-// ── Your own app files — these use network-first so updates land immediately
+
 const APP_SHELL = [
   './login.html',
   './register.html',
@@ -32,21 +28,20 @@ const APP_SHELL = [
   './manifest.json',
 ];
 
-// ── INSTALL — pre-cache CDN assets only ─────────────────────────────────
-// We don't pre-cache app files here because network-first handles them live
+
 self.addEventListener('install', event => {
   console.log(`[SW] Installing ${CACHE_NAME}`);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(CDN_ASSETS))
       .then(() => {
-        // ✅ Skip waiting — activate immediately without waiting for tabs to close
+        //  Skip waiting — activate immediately without waiting for tabs to close
         return self.skipWaiting();
       })
   );
 });
 
-// ── ACTIVATE — delete ALL old caches from previous versions ─────────────
+// ACTIVATE — delete ALL old caches from previous versions
 self.addEventListener('activate', event => {
   console.log(`[SW] Activating ${CACHE_NAME} — cleaning old caches`);
   event.waitUntil(
@@ -66,7 +61,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── FETCH — two strategies based on what's being requested ──────────────
+// ── FETCH — two strategies based on what's being requested
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -81,7 +76,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── Strategy 1: CACHE-FIRST for CDN assets (fonts, chart.js, firebase SDKs)
+  // Strategy 1: CACHE-FIRST for CDN assets (fonts, chart.js, firebase SDKs)
   // These URLs are version-pinned so they never change
   const isCDN = CDN_ASSETS.some(a => event.request.url.startsWith(a.split('?')[0])) ||
                 url.hostname.includes('fonts.gstatic.com') ||
@@ -105,7 +100,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── Strategy 2: NETWORK-FIRST for all your own app files
+  // Strategy 2: NETWORK-FIRST for all your own app files
   // Always tries the network first — gets your latest code
   // Falls back to cache only if offline
   event.respondWith(
