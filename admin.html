@@ -12,7 +12,7 @@
 <script src="sala-app.js" defer></script>
 <script src="sala-darkmode.js" defer></script>
 <style>
-/* ── Admin-specific overrides ─────────────────────────────── */
+/*  Admin-specific overrides  */
 .admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .admin-stat{
   background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);
@@ -207,9 +207,7 @@
     <button class="tab-btn" onclick="switchTab('tab-qa',this)"><i class="fa-solid fa-comments"></i> Q&amp;A <span class="tab-badge" id="pendingQABadge" style="display:none">0</span></button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: OVERVIEW
-  ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: OVERVIEW -->
   <div id="tab-overview" class="tab-pane active">
     <div class="overview-grid">
 
@@ -293,9 +291,7 @@
     </table>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: QUESTION BANK
-  ═══════════════════════════════════════════════════════ -->
+  <!--  TAB: QUESTION BANk-->
   <div id="tab-questions" class="tab-pane">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
@@ -388,9 +384,7 @@
     </table>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: RESOURCES
-  ═══════════════════════════════════════════════════════ -->
+  <!--  TAB: RESOURCES-->
   <div id="tab-resources" class="tab-pane">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
@@ -452,9 +446,7 @@
     </table>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       TAB: Q&A FORUM
-  ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: Q&A FORUM -->
   <div id="tab-qa" class="tab-pane">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
@@ -489,7 +481,7 @@
 </div>
 </div>
 
-<!-- ═══ INTERVENTION MODAL ═════════════════════════════════ -->
+<!-- INTERVENTION MODAL -->
 <div class="modal-overlay" id="interventionModal">
   <div class="modal-box">
     <div class="modal-head">
@@ -599,9 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => clearInterval(waitForFirebase), 8000);
 });
 
-// ══════════════════════════════════════════════════════════════
 // PAGE STATE
-// ══════════════════════════════════════════════════════════════
 let allStudents   = []; // full student list with quiz counts + mastery
 let filteredStudents = [];
 let currentModalStudent = null;
@@ -617,9 +607,8 @@ function initPage() {
   setTimeout(() => clearInterval(waitCatalog), 5000);
 }
 
-// ══════════════════════════════════════════════════════════════
-// TAB SWITCHING
-// ══════════════════════════════════════════════════════════════
+//TAB SWITCHING
+
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -630,9 +619,7 @@ function switchTab(id, btn) {
   if (id === 'tab-qa')        loadQATab();
 }
 
-// ══════════════════════════════════════════════════════════════
-// SUBJECT DROPDOWNS — from PROGRAMME_CATALOG
-// ══════════════════════════════════════════════════════════════
+//SUBJECT DROPDOWNS — from PROGRAMME_CATALOG
 function loadSubjectsIntoDropdowns() {
   const catalog = window.PROGRAMME_CATALOG;
   const selects  = ['qSubject','rSubject','qFilterSubject','qaFilterSubject'];
@@ -672,9 +659,7 @@ function getSubjectName(id) {
   return id.toUpperCase();
 }
 
-// ══════════════════════════════════════════════════════════════
-// LOAD ALL DATA  (students + recent activity)
-// ══════════════════════════════════════════════════════════════
+//  LOAD ALL DATA  (students + recent activity)
 async function loadAllData() {
   await Promise.all([loadStudents(), loadRecentActivity()]);
 }
@@ -748,9 +733,7 @@ async function loadStudents() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// SUMMARY STATS
-// ══════════════════════════════════════════════════════════════
+//  SUMMARY STATS
 function updateSummaryStats() {
   const total   = allStudents.length;
   const risk    = allStudents.filter(s => s.status === 'risk').length;
@@ -768,9 +751,7 @@ function updateSummaryStats() {
   else badge.style.display = 'none';
 }
 
-// ══════════════════════════════════════════════════════════════
-// OVERVIEW TAB
-// ══════════════════════════════════════════════════════════════
+//  OVERVIEW TAB
 function renderOverview() {
   // At-risk list
   const atRisk = allStudents.filter(s => s.status === 'risk').slice(0, 8);
@@ -819,9 +800,7 @@ function riskItemHTML(s) {
     </div>`;
 }
 
-// ══════════════════════════════════════════════════════════════
 // RECENT ACTIVITY
-// ══════════════════════════════════════════════════════════════
 async function loadRecentActivity() {
   const db = window.salaDB;
   try {
@@ -865,9 +844,7 @@ async function loadRecentActivity() {
   } catch(e) { console.error(e); }
 }
 
-// ══════════════════════════════════════════════════════════════
-// ANALYTICS TABLE
-// ══════════════════════════════════════════════════════════════
+//  ANALYTICS TABLE
 function applyFilters() {
   const prog   = document.getElementById('filterProgramme').value;
   const level  = document.getElementById('filterLevel').value;
@@ -991,9 +968,7 @@ function renderSkillBars(s) {
     </div>`;
 }
 
-// ══════════════════════════════════════════════════════════════
-// INTERVENTION MODAL
-// ══════════════════════════════════════════════════════════════
+//  INTERVENTION MODAL
 function openIntervention(uid) {
   const s = allStudents.find(x => x.uid === uid);
   if (!s) return;
@@ -1108,9 +1083,7 @@ async function scheduleCheckin() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
 // BULK ALERT
-// ══════════════════════════════════════════════════════════════
 function openBulkAlert() {
   const atRisk = allStudents.filter(s => s.status === 'risk');
   document.getElementById('bulkCount').textContent =
@@ -1148,9 +1121,7 @@ async function sendBulkAlert() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// QUESTION BANK
-// ══════════════════════════════════════════════════════════════
+//  QUESTION BANK
 function toggleQForm() {
   const w = document.getElementById('qFormWrap');
   const open = w.style.display === 'none';
@@ -1269,9 +1240,7 @@ document.getElementById('addQuestionForm').addEventListener('submit', async (e) 
   }
 });
 
-// ══════════════════════════════════════════════════════════════
 // RESOURCES
-// ══════════════════════════════════════════════════════════════
 function toggleRForm() {
   const w = document.getElementById('rFormWrap');
   const open = w.style.display === 'none';
@@ -1350,9 +1319,7 @@ async function deleteResource(id) {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════════════════════
+//UTILITIES
 function avatarColor(name) {
   const colors = ['#3d5afe','#00bfa6','#ffb703','#ff4d6d','#7c4dff','#06d6a0'];
   return colors[(name?.length || 0) % colors.length];
@@ -1383,9 +1350,7 @@ document.getElementById('bulkModal').addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('open');
 });
 
-// ══════════════════════════════════════════════════════════════
 // Q&A TAB
-// ══════════════════════════════════════════════════════════════
 async function loadQATab() {
   const list     = document.getElementById('adminQAList');
   const subjectF = document.getElementById('qaFilterSubject').value;
