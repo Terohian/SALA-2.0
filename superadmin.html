@@ -13,7 +13,6 @@
 <script src="sala-app.js" defer></script>
 <script src="sala-darkmode.js" defer></script>
 <style>
-/* ── Super Admin page-specific styles ────────────────────────────── */
 .sa-tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;overflow-x:auto}
 .sa-tab-btn{
   background:none;border:none;font-family:var(--font-body);font-weight:600;font-size:13.5px;
@@ -27,7 +26,6 @@
 .sa-tab-pane.active{display:block;animation:saFadeIn .25s ease}
 @keyframes saFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* stat grid */
 .sa-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .sa-stat{
   background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-md);
@@ -44,7 +42,6 @@
 .sa-stat-body .chg{font-size:11px;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:3px}
 .chg-up{color:var(--green)} .chg-down{color:var(--red)}
 
-/* user table */
 .user-table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
 .user-table{width:100%;border-collapse:collapse}
 .user-table th{
@@ -74,8 +71,7 @@
 .btn-edit-user:hover{background:rgba(61,90,254,.15)}
 .btn-del-user{background:rgba(255,77,109,.07);color:var(--red);border-color:rgba(255,77,109,.2)}
 .btn-del-user:hover{background:rgba(255,77,109,.15)}
-
-/* search + filter bar */
+  
 .sa-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .sa-search{
   display:flex;align-items:center;gap:8px;flex:1;min-width:200px;
@@ -85,7 +81,6 @@
 .sa-search input{background:none;font-size:13px;color:var(--text);width:100%}
 .sa-search input::placeholder{color:var(--muted)}
 
-/* modal overlay */
 .sa-modal-overlay{
   display:none;position:fixed;inset:0;background:rgba(10,14,40,.55);
   backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;
@@ -108,7 +103,6 @@
 .sa-input:focus,.sa-select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(61,90,254,.1)}
 .sa-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
 
-/* activity feed */
 .act-item{
   display:flex;align-items:flex-start;gap:14px;padding:12px 0;
   border-bottom:1px solid var(--border);
@@ -122,7 +116,6 @@
 .act-title{font-size:13.5px;font-weight:600;color:var(--navy)}
 .act-time{font-size:11.5px;color:var(--muted);margin-top:2px}
 
-/* system health */
 .health-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--border)}
 .health-row:last-child{border-bottom:none}
 .health-label{font-size:13px;font-weight:600;color:var(--text2);width:160px;flex-shrink:0}
@@ -134,16 +127,13 @@
 .hs-warn {background:rgba(255,183,3,.12); color:#cc9200}
 .hs-crit {background:rgba(255,77,109,.1); color:var(--red)}
 
-/* chart containers */
 .chart-box{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm)}
 .chart-box-title{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 
-/* empty / loading */
 .sa-empty{text-align:center;padding:48px 20px;color:var(--muted)}
 .sa-empty .ei{font-size:38px;margin-bottom:12px;opacity:.6}
 .sa-empty p{font-size:13.5px}
-
-/* pagination */
+  
 .pagination{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:14px}
 .page-btn{
   padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
@@ -224,16 +214,15 @@
     </div>
   </div>
 
-  <!-- ── STAT CARDS ────────────────────────────────────────── -->
+  <!--  STAT CARDS -->
   <div class="sa-stat-grid" id="statGrid">
-    <!-- injected by JS -->
     <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
     <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
     <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
     <div class="sa-stat"><div class="skeleton" style="width:42px;height:42px;border-radius:10px"></div><div style="flex:1"><div class="skeleton" style="height:24px;width:60px;margin-bottom:6px;border-radius:4px"></div><div class="skeleton" style="height:12px;width:80px;border-radius:3px"></div></div></div>
   </div>
 
-  <!-- ── TABS ─────────────────────────────────────────────── -->
+  <!-- TABS -->
   <div class="sa-tabs">
     <button class="sa-tab-btn active" id="tabBtnUsers"    onclick="saTab('users',this)">
       <i class="fa-solid fa-users"></i> Users
@@ -250,7 +239,7 @@
     </button>
   </div>
 
-  <!-- ════════════════════════════ TAB: USERS ════════════════════════════ -->
+  <!--  TAB: USERS -->
   <div class="sa-tab-pane active" id="pane-users">
     <div class="sa-bar">
       <div class="sa-search">
@@ -296,7 +285,7 @@
     <div class="pagination" id="userPagination"></div>
   </div>
 
-  <!-- ════════════════════════════ TAB: ACTIVITY ════════════════════════ -->
+  <!--  TAB: ACTIVITY  -->
   <div class="sa-tab-pane" id="pane-activity">
     <div class="grid-2" style="align-items:start">
       <div class="card">
@@ -324,7 +313,7 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════ TAB: OVERVIEW ═══════════════════════ -->
+  <!--  TAB: OVERVIEW  -->
   <div class="sa-tab-pane" id="pane-overview">
     <div class="grid-3" style="margin-bottom:14px">
       <div class="chart-box">
@@ -352,7 +341,7 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════ TAB: HEALTH ═════════════════════════ -->
+  <!-- TAB: HEALTH -->
   <div class="sa-tab-pane" id="pane-health">
     <div class="grid-2" style="align-items:start">
       <div class="card">
@@ -372,10 +361,10 @@
     </div>
   </div>
 
-</div><!-- /page-body -->
-</div><!-- /main-wrap -->
+</div>
+</div>
 
-<!-- ════════════════════ ADD / EDIT USER MODAL ════════════════════════ -->
+<!-- ADD / EDIT USER MODAL -->
 <div class="sa-modal-overlay" id="userModal">
   <div class="sa-modal">
     <div class="sa-modal-title" id="modalTitle">Add New User</div>
@@ -441,7 +430,7 @@
   </div>
 </div>
 
-<!-- ════════════════════ CONFIRM DELETE MODAL ════════════════════════ -->
+<!-- CONFIRM DELETE MODAL -->
 <div class="sa-modal-overlay" id="confirmModal">
   <div class="sa-modal" style="max-width:400px">
     <div class="sa-modal-title" style="color:var(--red)">⚠️ Delete User</div>
@@ -458,29 +447,22 @@
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════════════
-//  SALA SUPER ADMIN — JAVASCRIPT
-// ════════════════════════════════════════════════════════════════════
-
-let allUsers         = [];   // full user list from Firestore
-let filteredUsers    = [];   // after search/filter
+let allUsers         = [];   
+let filteredUsers    = [];   
 let currentPage      = 1;
 const PAGE_SIZE      = 15;
-let editingUserId    = null; // null = add mode, string = edit mode
+let editingUserId    = null; 
 let pendingDeleteId  = null;
 
-// ── GUARD: only allow role === 'admin' ───────────────────────────────
-// Uses firebase.firestore() directly — no dependency on sala-app.js timing
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Wait for Firebase SDK itself (loaded via script tags above sala-app.js)
+  // Wait for Firebase SDK
   const waitForSDK = setInterval(() => {
     if (typeof firebase !== 'undefined' && firebase.apps.length) {
       clearInterval(waitForSDK);
 
       firebase.auth().onAuthStateChanged(async (user) => {
         if (!user) {
-          // Auth state null — could be settling after redirect. Wait briefly.
           setTimeout(() => {
             if (!firebase.auth().currentUser) {
               window.location.href = 'login.html';
@@ -490,7 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-          // Use firebase.firestore() directly — does not need window.salaDB
           const db  = firebase.firestore();
           const doc = await db.collection('users').doc(user.uid).get();
 
@@ -504,9 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          // ✅ Authorised — boot the page
           window._cachedUserData = { uid: user.uid, ...doc.data() };
-          // Also expose as salaDB once ready
           window.salaDB = window.salaDB || firebase.firestore();
           applySidebarData(window._cachedUserData);
           document.getElementById('headerSub').textContent =
@@ -515,7 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
           refreshAll();
         } catch(e) {
           console.error('Superadmin auth guard error:', e);
-          // Don't redirect on transient errors — just log
         }
       });
     }
@@ -527,12 +505,9 @@ async function refreshAll() {
   document.getElementById('lastRefresh').textContent =
     'Last refresh: ' + new Date().toLocaleTimeString();
   await Promise.all([loadStats(), loadUsers()]);
-  // Lazy-load other tabs when activated
 }
 
-// ────────────────────────────────────────────────────────────────────
 //  STATS
-// ────────────────────────────────────────────────────────────────────
 async function loadStats() {
   const db = window.salaDB;
   try {
@@ -570,9 +545,7 @@ async function loadStats() {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
 //  USERS TAB
-// ────────────────────────────────────────────────────────────────────
 async function loadUsers() {
   const db = window.salaDB;
   try {
@@ -695,9 +668,7 @@ function progName(id) {
   return map[id] || (id ? id.toUpperCase() : '—');
 }
 
-// ────────────────────────────────────────────────────────────────────
 //  ADD / EDIT MODAL
-// ────────────────────────────────────────────────────────────────────
 function openAddUserModal() {
   editingUserId = null;
   document.getElementById('modalTitle').textContent = 'Add New User';
@@ -765,13 +736,11 @@ async function saveUser() {
     const db = window.salaDB;
 
     if (editingUserId) {
-      // UPDATE existing Firestore doc
       const payload = { name, email, role, regNumber: reg };
       if (role === 'student') { payload.programme = prog; payload.year = year; }
       await db.collection('users').doc(editingUserId).update(payload);
       showToast('✅ User updated successfully.');
     } else {
-      // CREATE new Firestore doc (Auth creation requires Admin SDK / Cloud Function)
       const payload = {
         name, email, role,
         regNumber:       reg,
@@ -796,9 +765,7 @@ async function saveUser() {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-//  DELETE
-// ────────────────────────────────────────────────────────────────────
+// DELETE
 function openDeleteModal(uid, name) {
   pendingDeleteId = uid;
   document.getElementById('confirmModalSub').innerHTML =
@@ -830,9 +797,7 @@ async function confirmDelete() {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-//  ACTIVITY TAB
-// ────────────────────────────────────────────────────────────────────
+// ACTIVITY TAB
 async function loadActivityTab() {
   await Promise.all([loadActivityFeed(), loadActivityCharts()]);
 }
@@ -841,7 +806,6 @@ async function loadActivityFeed() {
   const db   = window.salaDB;
   const feed = document.getElementById('activityFeed');
   try {
-    // Merge recent registrations + recent Q&A posts
     const [userSnap, qaSnap] = await Promise.all([
       db.collection('users').orderBy('createdAt','desc').limit(15).get(),
       db.collection('qa_threads').orderBy('createdAt','desc').limit(15).get(),
@@ -939,9 +903,7 @@ async function loadActivityCharts() {
   } catch(e) { console.error('Activity charts error:', e); }
 }
 
-// ────────────────────────────────────────────────────────────────────
 //  OVERVIEW TAB
-// ────────────────────────────────────────────────────────────────────
 async function loadOverviewTab() {
   const db = window.salaDB;
   try {
@@ -1015,9 +977,7 @@ async function loadOverviewTab() {
   } catch(e) { console.error('Overview error:', e); }
 }
 
-// ────────────────────────────────────────────────────────────────────
-//  HEALTH TAB
-// ────────────────────────────────────────────────────────────────────
+// HEALTH TAB
 async function loadHealthTab() {
   const start = Date.now();
   let firestoreOk = false;
@@ -1090,9 +1050,7 @@ async function loadHealthTab() {
   }).join('') || '<p style="color:var(--green);font-size:13px;padding:10px 0">✅ No issues detected.</p>';
 }
 
-// ────────────────────────────────────────────────────────────────────
-//  TAB SWITCHER
-// ────────────────────────────────────────────────────────────────────
+// TAB SWITCHER
 const tabLoaded = {};
 async function saTab(id, btn) {
   document.querySelectorAll('.sa-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1108,9 +1066,7 @@ async function saTab(id, btn) {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
 //  CHART HELPERS
-// ────────────────────────────────────────────────────────────────────
 const _charts = {};
 function drawBarChart(id, labels, data, label, color, horizontal=false) {
   const canvas = document.getElementById(id);
@@ -1138,9 +1094,7 @@ function drawDoughnutChart(id, labels, data, colors) {
   });
 }
 
-// ────────────────────────────────────────────────────────────────────
-//  UTILITIES
-// ────────────────────────────────────────────────────────────────────
+// UTILITIES
 function timeAgo(ts) {
   if (!ts) return '—';
   const d = Math.floor((Date.now() - ts) / 1000);
