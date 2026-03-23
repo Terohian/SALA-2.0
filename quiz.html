@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="sala-app.js" defer></script>
-<script src="sala-darkmode.js" defer></script>
 <script src="sala-ai-engine.js" defer></script>
 <style>
 .quiz-setup{max-width:680px;margin:0 auto}
@@ -159,8 +158,7 @@
     <div class="nav-item" onclick="location.href='recommendations.html'"><span class="nav-icon">✨</span><span>AI Recommendations</span></div>
     <div class="nav-item" onclick="nav('qa.html')"><span class="nav-icon">💬</span><span>Q&A Forum</span></div>
     <div class="nav-item" onclick="location.href='analytics.html'"><span class="nav-icon">📈</span><span>Analytics</span></div>
-    <div class="nav-section-label">Admin</div>
-    <div class="nav-item" onclick="location.href='admin.html'"><span class="nav-icon">⚙️</span><span>Admin Panel</span></div>
+
   </nav>
   <div class="sidebar-footer"><button class="logout-btn" onclick="location.href='login.html'"><span><i class="fa-solid fa-arrow-right-to-bracket"></i></span><span>Logout</span></button></div>
 </div>
@@ -169,7 +167,6 @@
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
   <span class="topbar-title">Quiz Engine</span><span class="topbar-sub">/ Adaptive Assessment</span>
   <div class="topbar-spacer"></div>
-    <button class="topbar-icon-btn" id="darkToggleBtn" onclick="salaToggleDark()" title="Toggle dark mode"><i class="fa-solid fa-moon" id="darkToggleIcon"></i></button>
   <button class="topbar-icon-btn">🔔<span class="notif-dot"></span></button>
 </div>
 
