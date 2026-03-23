@@ -225,9 +225,19 @@ if (!firebase.apps.length) {
   });
 }
 
-// ── Redirect already logged-in users ────────────────────────────
+// ── Redirect already logged-in users (with Firestore doc check) ─
+// Only redirect if they already have a Firestore profile (returning user)
+// Do NOT redirect during active registration flow
 firebase.auth().onAuthStateChanged(function(user) {
-  if (user) window.location.href = 'dashboard.html';
+  if (!user) return;
+  // Check if Firestore doc exists before redirecting
+  // This prevents redirecting mid-registration before the doc is written
+  firebase.firestore().collection('users').doc(user.uid).get()
+    .then(function(doc) {
+      if (doc.exists) window.location.href = 'dashboard.html';
+      // If doc doesn't exist, they are mid-registration - let doRegister() handle it
+    })
+    .catch(function() {});
 });
 
 // ── Password strength ────────────────────────────────────────────
@@ -255,6 +265,56 @@ function togglePw(id, btn) {
   btn.innerHTML = show
     ? '<i class="fa-regular fa-eye"></i>'
     : '<i class="fa-regular fa-eye-slash"></i>';
+}
+
+
+// ── Programme subjects map ────────────────────────────────────────
+var PROGRAMME_SUBJECTS = {
+  cs: {
+    y1s1:['intro','discmath','logic','prog'],
+    y1s2:['ds','oop','web'],
+    y2s1:['algo','db','stats'],
+    y2s2:['net','os','se'],
+    y3s1:['cybersec','ai','mobile'],
+    y3s2:['cloud','ml','isa'],
+    y4s1:['ann','nlp','cv'],
+    y4s2:['sys_admin','proj_mgmt','ethics']
+  },
+  bse: {
+    y1s1:['intro','prog','logic'],
+    y1s2:['oop','web','ds'],
+    y2s1:['se','db','algo'],
+    y2s2:['net','os','stats'],
+    y3s1:['mobile','cloud','ai'],
+    y3s2:['ml','cybersec','isa'],
+    y4s1:['ann','proj_mgmt','ethics'],
+    y4s2:['sys_admin','nlp','cv']
+  },
+  bbit: {
+    y1s1:['intro','prog','discmath'],
+    y1s2:['web','db','stats'],
+    y2s1:['se','net','oop'],
+    y2s2:['mobile','cloud','os'],
+    y3s1:['ml','ai','cybersec'],
+    y3s2:['isa','proj_mgmt','algo'],
+    y4s1:['ethics','sys_admin','nlp'],
+    y4s2:['ann','cv','ds']
+  },
+  it: {
+    y1s1:['intro','prog','web'],
+    y1s2:['net','db','os'],
+    y2s1:['se','stats','oop'],
+    y2s2:['mobile','cloud','algo'],
+    y3s1:['cybersec','ai','sys_admin'],
+    y3s2:['ml','isa','proj_mgmt'],
+    y4s1:['ann','ethics','nlp'],
+    y4s2:['ds','cv','discmath']
+  }
+};
+
+function getEnrolledSubjects(programme, level) {
+  var prog = PROGRAMME_SUBJECTS[programme] || PROGRAMME_SUBJECTS['cs'];
+  return prog[level] || prog['y1s1'] || [];
 }
 
 // ── Register ─────────────────────────────────────────────────────
@@ -296,6 +356,7 @@ function doRegister() {
     .then(function(cred) {
       var uid = cred.user.uid;
       // Step 2: Save Firestore profile
+      var enrolled = getEnrolledSubjects(programme, level);
       return firebase.firestore().collection('users').doc(uid).set({
         name:             firstName + ' ' + lastName,
         email:            email,
@@ -303,7 +364,7 @@ function doRegister() {
         regNumber:        regNum,
         programme:        programme,
         level:            level,
-        enrolledSubjects: [],
+        enrolledSubjects: enrolled,
         bkt_profile:      {},
         streakCount:      0,
         createdAt:        firebase.firestore.FieldValue.serverTimestamp()
