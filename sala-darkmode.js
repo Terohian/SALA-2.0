@@ -1,12 +1,3 @@
-/**
- * SALA Dark Mode — sala-darkmode.js
- * Drop  <script src="sala-darkmode.js" defer></script>  into any page
- * and add  <button … onclick="salaToggleDark()"> to the topbar.
- *
- * Uses [data-theme="dark"] on <html> so NO extra classes are needed.
- * Preference persists in localStorage under key "sala_theme".
- */
-
 (function () {
   // ── Apply saved or system preference immediately (before paint) ──────
   const saved  = localStorage.getItem('sala_theme');
@@ -14,7 +5,7 @@
   const theme  = saved || prefer;
   document.documentElement.setAttribute('data-theme', theme);
 
-  // ── Public toggle function ───────────────────────────────────────────
+  // ── Public toggle function 
   window.salaToggleDark = function () {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const next    = current === 'dark' ? 'light' : 'dark';
@@ -23,7 +14,7 @@
     updateIcon(next);
   };
 
-  // ── Icon helper ──────────────────────────────────────────────────────
+  // ── Icon helper 
   function updateIcon(theme) {
     const ico = document.getElementById('darkToggleIcon');
     if (!ico) return;
@@ -32,7 +23,7 @@
       : 'fa-solid fa-moon';
   }
 
-  // ── Run on DOMContentLoaded to set correct icon ──────────────────────
+  // ── Run on DOMContentLoaded to set correct icon 
   document.addEventListener('DOMContentLoaded', () => {
     updateIcon(document.documentElement.getAttribute('data-theme') || 'light');
   });
