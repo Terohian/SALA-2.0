@@ -283,8 +283,16 @@ function renderVelocityChart(quizzes) {
     options: {
       responsive: true,
       scales: {
-        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
-        x: { ticks: { maxRotation: 45 } }
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: v => v + '%' },
+          title: { display: true, text: 'Score', font: { size: 13, weight: 'bold' }, color: '#555' }
+        },
+        x: {
+          ticks: { maxRotation: 45 },
+          title: { display: true, text: 'Date', font: { size: 13, weight: 'bold' }, color: '#555' }
+        }
       },
       plugins: {
         legend: { display: true, position: 'top' },
